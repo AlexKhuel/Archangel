@@ -1,10 +1,12 @@
 #include <cstdint>
+#include <string>
 
 class Board
 {
     using Bitboard = uint64_t;
 
 public:
+    Board(std::string fenSring);
     Bitboard whitePawns;
     Bitboard whiteKnights;
     Bitboard whiteBishops;
@@ -32,8 +34,9 @@ public:
     uint8_t halfmoveClock;
     uint16_t fullmoveCounter;
 
-private:
+public:
     void makeMove();
     void unmakeMove();
     void clearMoveList();
+    void printChessBoard();
 };
