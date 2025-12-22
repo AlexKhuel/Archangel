@@ -1,18 +1,48 @@
+#ifndef MOVEGEN_H
+#define MOVEGEN_H
+
 #include "board.h"
 #include "movelist.h"
+#include "piece.h"
 
 class MoveGen
 {
+    using Bitboard = uint64_t;
+
 public:
-    void MoveGen::generateMoves(const Board &board, MoveList &moves);
+    void generateMoves(const Board &board, MoveList &moves);
+    Bitboard bitPositions[64] = {
+        0x0000000000000001ULL, 0x0000000000000002ULL, 0x0000000000000004ULL, 0x0000000000000008ULL,
+        0x0000000000000010ULL, 0x0000000000000020ULL, 0x0000000000000040ULL, 0x0000000000000080ULL,
+        0x0000000000000100ULL, 0x0000000000000200ULL, 0x0000000000000400ULL, 0x0000000000000800ULL,
+        0x0000000000001000ULL, 0x0000000000002000ULL, 0x0000000000004000ULL, 0x0000000000008000ULL,
+        0x0000000000010000ULL, 0x0000000000020000ULL, 0x0000000000040000ULL, 0x0000000000080000ULL,
+        0x0000000000100000ULL, 0x0000000000200000ULL, 0x0000000000400000ULL, 0x0000000000800000ULL,
+        0x0000000001000000ULL, 0x0000000002000000ULL, 0x0000000004000000ULL, 0x0000000008000000ULL,
+        0x0000000010000000ULL, 0x0000000020000000ULL, 0x0000000040000000ULL, 0x0000000080000000ULL,
+        0x0000000100000000ULL, 0x0000000200000000ULL, 0x0000000400000000ULL, 0x0000000800000000ULL,
+        0x0000001000000000ULL, 0x0000002000000000ULL, 0x0000004000000000ULL, 0x0000008000000000ULL,
+        0x0000010000000000ULL, 0x0000020000000000ULL, 0x0000040000000000ULL, 0x0000080000000000ULL,
+        0x0000100000000000ULL, 0x0000200000000000ULL, 0x0000400000000000ULL, 0x0000800000000000ULL,
+        0x0001000000000000ULL, 0x0002000000000000ULL, 0x0004000000000000ULL, 0x0008000000000000ULL,
+        0x0010000000000000ULL, 0x0020000000000000ULL, 0x0040000000000000ULL, 0x0080000000000000ULL,
+        0x0100000000000000ULL, 0x0200000000000000ULL, 0x0400000000000000ULL, 0x0800000000000000ULL,
+        0x1000000000000000ULL, 0x2000000000000000ULL, 0x4000000000000000ULL, 0x8000000000000000ULL};
+
+    // Directions: {-1,1,-8,8,-7,7,-9,9} = {S,N,W,E,SW,NE,NW,SE}
+    // Square 0 = bottom-left, Square 63 = top-right
+    uint8_t disToEdge[64][8] = {
+        {0, 7, 0, 7, 0, 7, 0, 0}, {0, 7, 1, 6, 0, 6, 1, 0}, {0, 7, 2, 5, 0, 5, 2, 0}, {0, 7, 3, 4, 0, 4, 3, 0}, {0, 7, 4, 3, 0, 3, 4, 0}, {0, 7, 5, 2, 0, 2, 5, 0}, {0, 7, 6, 1, 0, 1, 6, 0}, {0, 7, 7, 0, 0, 0, 7, 0}, {1, 6, 0, 7, 0, 6, 0, 1}, {1, 6, 1, 6, 1, 6, 1, 1}, {1, 6, 2, 5, 1, 5, 2, 1}, {1, 6, 3, 4, 1, 4, 3, 1}, {1, 6, 4, 3, 1, 3, 4, 1}, {1, 6, 5, 2, 1, 2, 5, 1}, {1, 6, 6, 1, 1, 1, 6, 1}, {1, 6, 7, 0, 1, 0, 7, 1}, {2, 5, 0, 7, 0, 5, 0, 2}, {2, 5, 1, 6, 1, 5, 1, 2}, {2, 5, 2, 5, 2, 5, 2, 2}, {2, 5, 3, 4, 2, 4, 3, 2}, {2, 5, 4, 3, 2, 3, 4, 2}, {2, 5, 5, 2, 2, 2, 5, 2}, {2, 5, 6, 1, 2, 1, 6, 2}, {2, 5, 7, 0, 2, 0, 7, 2}, {3, 4, 0, 7, 0, 4, 0, 3}, {3, 4, 1, 6, 1, 4, 1, 3}, {3, 4, 2, 5, 2, 4, 2, 3}, {3, 4, 3, 4, 3, 4, 3, 3}, {3, 4, 4, 3, 3, 3, 4, 3}, {3, 4, 5, 2, 3, 2, 5, 3}, {3, 4, 6, 1, 3, 1, 6, 3}, {3, 4, 7, 0, 3, 0, 7, 3}, {4, 3, 0, 7, 0, 3, 0, 4}, {4, 3, 1, 6, 1, 3, 1, 4}, {4, 3, 2, 5, 2, 3, 2, 4}, {4, 3, 3, 4, 3, 3, 3, 4}, {4, 3, 4, 3, 4, 3, 4, 4}, {4, 3, 5, 2, 4, 2, 5, 4}, {4, 3, 6, 1, 4, 1, 6, 4}, {4, 3, 7, 0, 4, 0, 7, 4}, {5, 2, 0, 7, 0, 2, 0, 5}, {5, 2, 1, 6, 1, 2, 1, 5}, {5, 2, 2, 5, 2, 2, 2, 5}, {5, 2, 3, 4, 3, 2, 3, 5}, {5, 2, 4, 3, 4, 2, 4, 5}, {5, 2, 5, 2, 5, 2, 5, 5}, {5, 2, 6, 1, 5, 1, 6, 5}, {5, 2, 7, 0, 5, 0, 7, 5}, {6, 1, 0, 7, 0, 1, 0, 6}, {6, 1, 1, 6, 1, 1, 1, 6}, {6, 1, 2, 5, 2, 1, 2, 6}, {6, 1, 3, 4, 3, 1, 3, 6}, {6, 1, 4, 3, 4, 1, 4, 6}, {6, 1, 5, 2, 5, 1, 5, 6}, {6, 1, 6, 1, 6, 1, 6, 6}, {6, 1, 7, 0, 6, 0, 7, 6}, {7, 0, 0, 7, 0, 0, 0, 7}, {7, 0, 1, 6, 0, 0, 1, 7}, {7, 0, 2, 5, 0, 0, 2, 7}, {7, 0, 3, 4, 0, 0, 3, 7}, {7, 0, 4, 3, 0, 0, 4, 7}, {7, 0, 5, 2, 0, 0, 5, 7}, {7, 0, 6, 1, 0, 0, 6, 7}, {7, 0, 7, 0, 0, 0, 7, 7}};
 
 private:
-    bool inCheck(const Board &board, bool whiteTurn);
+    bool
+    inCheck(const Board &board, bool isWhiteTurn);
     bool addMove(MoveList &moves, uint8_t startPos, uint8_t endPos);
-    void pawnMoves(const Board &board, uint8_t startPos);
-    void knightMoves(const Board &board, uint8_t startPos);
-    void bishopMoves(const Board &board, uint8_t startPos);
-    void rookMoves(const Board &board, uint8_t startPos);
-    void queenMoves(const Board &board, uint8_t startPos);
-    void kingMoves(const Board &board, uint8_t startPos);
+    void pawnMoves(const Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
+    void knightMoves(const Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
+    void bishopMoves(const Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
+    void rookMoves(const Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
+    void kingMoves(const Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
 };
+
+#endif

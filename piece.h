@@ -1,4 +1,8 @@
+#ifndef PIECE_H
+#define PIECE_H
+
 #include <cstdint>
+
 class Piece
 {
 public:
@@ -11,4 +15,8 @@ public:
 
     static const uint8_t White = 0;
     static const uint8_t Black = 8;
+
+    static const uint8_t Pinned = 16;
 };
+
+#endif

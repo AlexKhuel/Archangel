@@ -1,3 +1,6 @@
+#ifndef BOARD_H
+#define BOARD_H
+
 #include <cstdint>
 #include <string>
 
@@ -13,18 +16,21 @@ public:
     Bitboard whiteRooks;
     Bitboard whiteQueens;
     Bitboard whiteKing;
+    Bitboard whiteCombined;
+    Bitboard whitePinned;
     Bitboard blackPawns;
     Bitboard blackKnights;
     Bitboard blackBishops;
     Bitboard blackRooks;
     Bitboard blackQueens;
     Bitboard blackKing;
-    Bitboard whiteCombined;
     Bitboard blackCombined;
+    Bitboard blackPinned;
+
     Bitboard allCombined;
     uint8_t pieceArray[64];
 
-    bool whiteTurn;
+    bool isWhiteTurn;
     bool whiteShortCastle;
     bool whiteLongCastle;
     bool blackShortCastle;
@@ -40,3 +46,5 @@ public:
     void clearMoveList();
     void printChessBoard();
 };
+
+#endif

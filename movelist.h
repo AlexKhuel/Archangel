@@ -1,8 +1,14 @@
+#ifndef MOVELIST_H
+#define MOVELIST_H
+
 #include <cstdint>
+#include "move.h"
 
 struct MoveList
 {
 public:
-    uint16_t moveList[256];
-    uint16_t count;
+    Move moveList[256];
+    Move count;
 };
+
+#endif
