@@ -24,19 +24,24 @@ struct Move
     static const uint16_t QUEEN = 0b1100000000000000;
 
 public:
+    Move()
+    {
+        data = 0;
+    }
+
     Move(int from, int to, int flag = 0, int promotion = 0)
     {
         data = from | (to << 6) | (flag << 12) | (promotion << 14);
     }
 
     int getFrom() const { return data & FROM_MASK; }
-    int getTo() const { return data & TO_MASK; }
+    int getTo() const { return (data & TO_MASK) >> 6; }
     int getPromotion() const { return data & PROMOTION_MASK; }
-    bool isSpecial() const { return data & FLAG_MASK != 0; }
+    bool isSpecial() const { return (data & FLAG_MASK) != 0; }
 
-    bool isPromotion() const { return data & FLAG_MASK == PROMOTION; }
-    bool isCastling() const { return data & FLAG_MASK == CASTLING; }
-    bool isPassant() const { return data & FLAG_MASK == PASSANT; }
+    bool isPromotion() const { return (data & FLAG_MASK) == PROMOTION; }
+    bool isCastling() const { return (data & FLAG_MASK) == CASTLING; }
+    bool isPassant() const { return (data & FLAG_MASK) == PASSANT; }
 };
 
 #endif

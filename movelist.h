@@ -6,9 +6,18 @@
 
 struct MoveList
 {
-public:
     Move moveList[256];
-    Move count;
+    int count = 0;
+
+    void add(Move m)
+    {
+        moveList[count++] = m;
+    }
+
+    void clear()
+    {
+        count = 0;
+    }
 };
 
 #endif

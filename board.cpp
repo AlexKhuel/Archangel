@@ -3,6 +3,15 @@
 #include <cstddef>
 #include <iostream>
 
+void Board::makeMove(Move currMove)
+{
+}
+
+void Board::clearMoveList()
+{
+    this->possibleMoves.clear();
+}
+
 void Board::printChessBoard()
 {
     // Unicode chess piece symbols
@@ -54,6 +63,7 @@ Board::Board(std::string fenString)
     passantSquare = 0;
     halfmoveClock = 0;
     fullmoveCounter = 1;
+    MoveList possibleMoves;
 
     for (int i = 0; i < 64; i++)
         pieceArray[i] = 0;

@@ -46,6 +46,10 @@ bool MoveGen::inCheck(const Board &board, bool isWhiteTurn)
     return false;
 }
 
+bool MoveGen::isPinned(const Board &board, uint8_t currPiece)
+{
+}
+
 bool MoveGen::addMove(MoveList &moves, uint8_t startPos, uint8_t endPos)
 {
     return false;
@@ -53,19 +57,19 @@ bool MoveGen::addMove(MoveList &moves, uint8_t startPos, uint8_t endPos)
 
 void MoveGen::pawnMoves(const Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask)
 {
-    Bitboard friendlyPieces = board.isWhiteTurn ? board.whiteCombined : board.blackCombined;
-    Bitboard opponentPieces = board.isWhiteTurn ? board.blackCombined : board.whiteCombined;
+    Bitboard friendlyPieces = board.whiteCombined;
+    Bitboard opponentPieces = board.blackCombined;
 
     uint8_t currPiece = board.pieceArray[startPos];
 
-    if ((currPiece & Piece::White) == Piece::White)
+    if (((bitPos >> 7) & opponentPieces) != 0 && (currPiece & Piece::Pinned) == 0)
     {
-        if (((bitPos >> 7) & opponentPieces) != 0 && (currPiece & Piece::Pinned) == 0)
+        Board modifiedBoard = board;
+        modifiedBoard.makeMove(Move(startPos, startPos + 7));
+        modifiedBoard.nextTurn();
+        if ()
         {
-                }
-    }
-    else
-    {
+        }
     }
 }
 

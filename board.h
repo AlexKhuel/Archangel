@@ -1,6 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include "movelist.h"
 #include <cstdint>
 #include <string>
 
@@ -18,6 +19,7 @@ public:
     Bitboard whiteKing;
     Bitboard whiteCombined;
     Bitboard whitePinned;
+
     Bitboard blackPawns;
     Bitboard blackKnights;
     Bitboard blackBishops;
@@ -28,7 +30,10 @@ public:
     Bitboard blackPinned;
 
     Bitboard allCombined;
+
     uint8_t pieceArray[64];
+
+    MoveList possibleMoves;
 
     bool isWhiteTurn;
     bool whiteShortCastle;
@@ -41,8 +46,7 @@ public:
     uint16_t fullmoveCounter;
 
 public:
-    void makeMove();
-    void unmakeMove();
+    void makeMove(Move currMove);
     void clearMoveList();
     void printChessBoard();
 };
