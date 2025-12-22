@@ -5,6 +5,23 @@
 
 void Board::makeMove(Move currMove)
 {
+    // TODO: Write makeMove
+}
+
+void Board::unmakeMove(Move currMove)
+{
+    // TODO: Write unmakeMove
+}
+
+bool Board::isInCheck()
+{
+    // TODO: Write isInCheck
+    return false;
+}
+
+void Board::addMove(Move moveToAdd)
+{
+    this->possibleMoves.add(moveToAdd);
 }
 
 void Board::clearMoveList()
@@ -236,4 +253,41 @@ Board::Board(std::string fenString)
         else
             fullmoveCounter = 1;
     }
+}
+
+void Board::nextTurn()
+{
+    whitePawns = __builtin_bswap64(whitePawns);
+    whiteKnights = __builtin_bswap64(whiteKnights);
+    whiteBishops = __builtin_bswap64(whiteBishops);
+    whiteRooks = __builtin_bswap64(whiteRooks);
+    whiteQueens = __builtin_bswap64(whiteQueens);
+    whiteKing = __builtin_bswap64(whiteKing);
+    whiteCombined = __builtin_bswap64(whiteCombined);
+    whitePinned = __builtin_bswap64(whitePinned);
+
+    blackPawns = __builtin_bswap64(blackPawns);
+    blackKnights = __builtin_bswap64(blackKnights);
+    blackBishops = __builtin_bswap64(blackBishops);
+    blackRooks = __builtin_bswap64(blackRooks);
+    blackQueens = __builtin_bswap64(blackQueens);
+    blackKing = __builtin_bswap64(blackKing);
+    blackCombined = __builtin_bswap64(blackCombined);
+    blackPinned = __builtin_bswap64(blackPinned);
+
+    allCombined = __builtin_bswap64(allCombined);
+
+    clearMoveList();
+
+    for (int i = 0; i < 32; i++)
+    {
+        std::swap(pieceArray[i], pieceArray[63 - i]);
+    }
+
+    std::swap(whiteShortCastle, blackShortCastle);
+    std::swap(whiteLongCastle, blackLongCastle);
+
+    if (!evenNumMove)
+        fullmoveCounter++;
+    evenNumMove = !evenNumMove;
 }

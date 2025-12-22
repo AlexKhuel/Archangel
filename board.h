@@ -43,12 +43,18 @@ public:
 
     uint8_t passantSquare;
     uint8_t halfmoveClock;
+
+    bool evenNumMove;
     uint16_t fullmoveCounter;
 
 public:
     void makeMove(Move currMove);
+    void unmakeMove(Move currMove);
+    bool isInCheck();
+    void addMove(Move moveToAdd);
     void clearMoveList();
     void printChessBoard();
+    void nextTurn();
 };
 
 #endif
