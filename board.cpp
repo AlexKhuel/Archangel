@@ -154,14 +154,27 @@ void Board::pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboar
 	}
 }
 
-void Board::addMove(Move moveToAdd)
+void Board::unmakeMove(const BoardState &anchor)
 {
-	this->possibleMoves.add(moveToAdd);
-}
+	// 1. Restore the Bitboard array (2x8 = 16 elements)
+	// We treat the 2D array as a flat block of 16 Bitboards
+	std::copy(&anchor.bitboards[0][0], &anchor.bitboards[0][0] + 16, &bitboards[0][0]);
 
-void Board::clearMoveList()
-{
-	this->possibleMoves.clear();
+	// 2. Restore the Piece Array (64 elements)
+	std::copy(anchor.pieceArray, anchor.pieceArray + 64, pieceArray);
+
+	// 3. Restore the individual variables
+	allCombined = anchor.allCombined;
+
+	whiteShortCastle = anchor.whiteShortCastle;
+	whiteLongCastle = anchor.whiteLongCastle;
+	blackShortCastle = anchor.blackShortCastle;
+	blackLongCastle = anchor.blackLongCastle;
+
+	passantSquare = anchor.passantSquare;
+	halfmoveClock = anchor.halfmoveClock;
+
+	// Note: possibleMoves is usually regenerated, not restored.
 }
 
 void Board::printChessBoard()
@@ -181,7 +194,7 @@ void Board::printChessBoard()
 			int index = rank * 8 + file;
 			uint8_t piece = pieceArray[index];
 
-			uint8_t type = piece & 0x7;  // Extract piece type (bits 0-2)
+			uint8_t type = piece & 0x7;	 // Extract piece type (bits 0-2)
 			uint8_t color = piece & 0x8; // Extract color (bit 3)
 
 			const char *symbol = " ";
@@ -208,6 +221,8 @@ void Board::printChessBoard()
 
 Board::Board(std::string fenString)
 {
+	bool swapLater = false;
+
 	for (uint8_t color = 0; color < 2; color++)
 	{
 		for (uint8_t type = 0; type < 8; type++)
@@ -219,7 +234,6 @@ Board::Board(std::string fenString)
 	allCombined = 0;
 
 	whiteShortCastle = whiteLongCastle = blackShortCastle = blackLongCastle = false;
-	isWhiteTurn = true;
 	passantSquare = 0;
 	halfmoveClock = 0;
 	fullmoveCounter = 1;
@@ -315,10 +329,10 @@ Board::Board(std::string fenString)
 	// Section 2: Active color
 	if (i < fenString.length())
 	{
-		if (fenString[i] == 'w')
-			isWhiteTurn = true;
-		else if (fenString[i] == 'b')
-			isWhiteTurn = false;
+		if (fenString[i] == 'b')
+		{
+			swapLater = true;
+		}
 		i += 2;
 	}
 
@@ -396,6 +410,26 @@ Board::Board(std::string fenString)
 		else
 			fullmoveCounter = 1;
 	}
+	if (swapLater)
+	{
+		for (uint8_t color = 0; color < 2; color++)
+		{
+			for (uint8_t type = 0; type < 8; type++)
+			{
+				bitboards[color][type] = __builtin_bswap64(bitboards[color][type]);
+			}
+		}
+
+		allCombined = __builtin_bswap64(allCombined);
+
+		for (int i = 0; i < 32; i++)
+		{
+			std::swap(pieceArray[i], pieceArray[63 - i]);
+		}
+
+		std::swap(whiteShortCastle, blackShortCastle);
+		std::swap(whiteLongCastle, blackLongCastle);
+	}
 }
 
 void Board::nextTurn()
@@ -423,4 +457,34 @@ void Board::nextTurn()
 	if (!evenNumMove)
 		fullmoveCounter++;
 	evenNumMove = !evenNumMove;
+}
+
+BoardState Board::saveState()
+{
+	BoardState state;
+	// Copy bitboards
+	for (int i = 0; i < 2; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			state.bitboards[i][j] = bitboards[i][j];
+		}
+	}
+	state.allCombined = allCombined;
+
+	// Copy piece array
+	for (int i = 0; i < 64; i++)
+	{
+		state.pieceArray[i] = pieceArray[i];
+	}
+
+	state.whiteShortCastle = whiteShortCastle;
+	state.whiteLongCastle = whiteLongCastle;
+	state.blackShortCastle = blackShortCastle;
+	state.blackLongCastle = blackLongCastle;
+
+	state.passantSquare = passantSquare;
+	state.halfmoveClock = halfmoveClock;
+
+	return state;
 }

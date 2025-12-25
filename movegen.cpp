@@ -2,7 +2,7 @@
 #include "board.h"
 #include <iostream>
 
-void MoveGen::generateMoves(Board &board)
+void MoveGen::generateMoves(Board &board, MoveList &list)
 {
     for (uint8_t i = 0; i < 64; i++)
     {
@@ -16,23 +16,23 @@ void MoveGen::generateMoves(Board &board)
         switch (currPiece & 7)
         {
         case Piece::PAWN:
-            pawnMoves(board, i, bitPos);
+            pawnMoves(board, i, bitPos, list);
             break;
         case Piece::KNIGHT:
-            knightMoves(board, i, bitPos);
+            knightMoves(board, i, bitPos, list);
             break;
         case Piece::BISHOP:
-            bishopMoves(board, i, bitPos);
+            bishopMoves(board, i, bitPos, list);
             break;
         case Piece::ROOK:
-            rookMoves(board, i, bitPos);
+            rookMoves(board, i, bitPos, list);
             break;
         case Piece::QUEEN:
-            bishopMoves(board, i, bitPos);
-            rookMoves(board, i, bitPos);
+            bishopMoves(board, i, bitPos, list);
+            rookMoves(board, i, bitPos, list);
             break;
         case Piece::KING:
-            kingMoves(board, i, bitPos);
+            kingMoves(board, i, bitPos, list);
             break;
         default:
             std::cout << "You have reached the default case. This is bad." << std::endl;
@@ -41,7 +41,7 @@ void MoveGen::generateMoves(Board &board)
     }
 }
 
-void MoveGen::pawnMoves(Board &board, uint8_t startPos, Bitboard bitPos)
+void MoveGen::pawnMoves(Board &board, uint8_t startPos, Bitboard bitPos, MoveList &list)
 {
     Bitboard opponentPieces = board.bitboards[1][0];
 
@@ -49,62 +49,63 @@ void MoveGen::pawnMoves(Board &board, uint8_t startPos, Bitboard bitPos)
     {
         if (startPos / 8 == 6)
         {
-            board.addMove(Move(startPos, startPos + 7, Move::PROMOTION, Move::KNIGHT));
-            board.addMove(Move(startPos, startPos + 7, Move::PROMOTION, Move::BISHOP));
-            board.addMove(Move(startPos, startPos + 7, Move::PROMOTION, Move::ROOK));
-            board.addMove(Move(startPos, startPos + 7, Move::PROMOTION, Move::QUEEN));
+            list.add(Move(startPos, startPos + 7, Move::PROMOTION, Move::KNIGHT));
+            list.add(Move(startPos, startPos + 7, Move::PROMOTION, Move::BISHOP));
+            list.add(Move(startPos, startPos + 7, Move::PROMOTION, Move::ROOK));
+            list.add(Move(startPos, startPos + 7, Move::PROMOTION, Move::QUEEN));
         }
         else
         {
-            board.addMove(Move(startPos, startPos + 7));
+            list.add(Move(startPos, startPos + 7));
         }
     }
     if (startPos % 8 != 7 && ((bitPos << 9) & opponentPieces) != 0 && tryMove(board, Move(startPos, startPos + 9)))
     {
         if (startPos / 8 == 6)
         {
-            board.addMove(Move(startPos, startPos + 9, Move::PROMOTION, Move::KNIGHT));
-            board.addMove(Move(startPos, startPos + 9, Move::PROMOTION, Move::BISHOP));
-            board.addMove(Move(startPos, startPos + 9, Move::PROMOTION, Move::ROOK));
-            board.addMove(Move(startPos, startPos + 9, Move::PROMOTION, Move::QUEEN));
+            list.add(Move(startPos, startPos + 9, Move::PROMOTION, Move::KNIGHT));
+            list.add(Move(startPos, startPos + 9, Move::PROMOTION, Move::BISHOP));
+            list.add(Move(startPos, startPos + 9, Move::PROMOTION, Move::ROOK));
+            list.add(Move(startPos, startPos + 9, Move::PROMOTION, Move::QUEEN));
         }
         else
         {
-            board.addMove(Move(startPos, startPos + 9));
+            list.add(Move(startPos, startPos + 9));
         }
     }
     if ((bitPos << 8 & board.allCombined) == 0 && tryMove(board, Move(startPos, startPos + 8)))
     {
         if (startPos / 8 == 6)
         {
-            board.addMove(Move(startPos, startPos + 8, Move::PROMOTION, Move::KNIGHT));
-            board.addMove(Move(startPos, startPos + 8, Move::PROMOTION, Move::BISHOP));
-            board.addMove(Move(startPos, startPos + 8, Move::PROMOTION, Move::ROOK));
-            board.addMove(Move(startPos, startPos + 8, Move::PROMOTION, Move::QUEEN));
+            list.add(Move(startPos, startPos + 8, Move::PROMOTION, Move::KNIGHT));
+            list.add(Move(startPos, startPos + 8, Move::PROMOTION, Move::BISHOP));
+            list.add(Move(startPos, startPos + 8, Move::PROMOTION, Move::ROOK));
+            list.add(Move(startPos, startPos + 8, Move::PROMOTION, Move::QUEEN));
         }
         else
         {
-            board.addMove(Move(startPos, startPos + 8));
+            list.add(Move(startPos, startPos + 8));
         }
     }
     if ((startPos / 8) == 1 && (bitPos << 8 & board.allCombined) == 0 && (bitPos << 16 & board.allCombined) == 0 && tryMove(board, Move(startPos, startPos + 16)))
     {
-        board.addMove(Move(startPos, startPos + 16));
+        list.add(Move(startPos, startPos + 16));
     }
     if (startPos % 8 != 0 && board.passantSquare == startPos + 7 && tryMove(board, Move(startPos, startPos + 7)))
     {
-        board.addMove(Move(startPos, startPos + 7, Move::PASSANT));
+        list.add(Move(startPos, startPos + 7, Move::PASSANT));
     }
     if (startPos % 8 != 7 && board.passantSquare == startPos + 9 && tryMove(board, Move(startPos, startPos + 9)))
     {
-        board.addMove(Move(startPos, startPos + 9, Move::PASSANT));
+        list.add(Move(startPos, startPos + 9, Move::PASSANT));
     }
 }
 
 bool MoveGen::tryMove(Board &board, Move testMove)
 {
+    BoardState oldState = board.saveState();
     board.makeMove(testMove);
     bool legal = !board.isInCheck();
-    board.unmakeMove(testMove);
+    board.unmakeMove(oldState);
     return legal;
 }

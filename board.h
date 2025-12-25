@@ -1,14 +1,25 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include "movelist.h"
-#include "movegen.h"
 #include <cstdint>
-#include <string>
+#include "move.h"
+#include "movelist.h"
+#include "types.h"
 
+struct BoardState
+{
+    Bitboard bitboards[2][8];
+    Bitboard allCombined;
+    uint8_t pieceArray[64];
+    bool whiteShortCastle;
+    bool whiteLongCastle;
+    bool blackShortCastle;
+    bool blackLongCastle;
+    uint8_t passantSquare;
+    uint8_t halfmoveClock;
+};
 class Board
 {
-    using Bitboard = uint64_t;
 
 public:
     Bitboard bitboards[2][8]; // 0 is combined, 1-6 holds piece type, 8 is pinned. White is 0, 1 is black
@@ -17,9 +28,6 @@ public:
 
     uint8_t pieceArray[64];
 
-    MoveList possibleMoves;
-
-    bool isWhiteTurn;
     bool whiteShortCastle;
     bool whiteLongCastle;
     bool blackShortCastle;
@@ -55,10 +63,9 @@ public:
     void normalMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
     void rookKingMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
     void pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
-    void unmakeMove(Move currMove);
+    void unmakeMove(const BoardState &anchor);
     bool isInCheck();
-    void addMove(Move moveToAdd);
-    void clearMoveList();
+    BoardState saveState();
     void printChessBoard();
     void nextTurn();
 };
