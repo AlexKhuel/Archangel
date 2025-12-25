@@ -8,17 +8,6 @@ void Board::makeMove(Move currMove)
     // TODO: Write makeMove
 }
 
-void Board::unmakeMove(Move currMove)
-{
-    // TODO: Write unmakeMove
-}
-
-bool Board::isInCheck()
-{
-    // TODO: Write isInCheck
-    return false;
-}
-
 void Board::addMove(Move moveToAdd)
 {
     this->possibleMoves.add(moveToAdd);
@@ -80,7 +69,7 @@ Board::Board(std::string fenString)
     passantSquare = 0;
     halfmoveClock = 0;
     fullmoveCounter = 1;
-    MoveList possibleMoves;
+    possibleMoves.clear();
 
     for (int i = 0; i < 64; i++)
         pieceArray[i] = 0;
@@ -209,8 +198,8 @@ Board::Board(std::string fenString)
     {
         if (fenString[i] != '-')
         {
-            int file = fenString[i] - 'a';
-            int rank = fenString[i + 1] - '1';
+            file = fenString[i] - 'a';
+            rank = fenString[i + 1] - '1';
             passantSquare = (uint8_t)(rank * 8 + file);
             i += 2;
         }

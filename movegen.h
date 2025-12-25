@@ -10,7 +10,7 @@ class MoveGen
     using Bitboard = uint64_t;
 
 public:
-    void generateMoves(Board &board, MoveList &moves);
+    void generateMoves(Board &board);
     Bitboard bitPositions[64] = {
         0x0000000000000001ULL, 0x0000000000000002ULL, 0x0000000000000004ULL, 0x0000000000000008ULL,
         0x0000000000000010ULL, 0x0000000000000020ULL, 0x0000000000000040ULL, 0x0000000000000080ULL,
@@ -36,11 +36,11 @@ public:
 
 private:
     bool isPinned(Board &board, uint8_t currPiece);
-    void pawnMoves(Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
-    void knightMoves(Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
-    void bishopMoves(Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
-    void rookMoves(Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
-    void kingMoves(Board &board, uint8_t startPos, uint64_t bitPos, uint64_t colorMask);
+    void pawnMoves(Board &board, uint8_t startPos, Bitboard bitPos);
+    void knightMoves(Board &board, uint8_t startPos, Bitboard bitPos);
+    void bishopMoves(Board &board, uint8_t startPos, Bitboard bitPos);
+    void rookMoves(Board &board, uint8_t startPos, Bitboard bitPos);
+    void kingMoves(Board &board, uint8_t startPos, Bitboard bitPos);
     bool tryMove(Board &board, Move testMove);
 };
 
