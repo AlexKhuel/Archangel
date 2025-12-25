@@ -14,66 +14,7 @@ void Board::makeMove(Move currMove)
 
 	if ((fromType == Piece::ROOK || fromType == Piece::KING) && (whiteShortCastle || whiteLongCastle))
 	{
-		if (fromType == Piece::KING)
-		{
-			whiteShortCastle = whiteLongCastle = false;
-		}
-		else if (currMove.getFrom() == 0 && Piece::ROOK)
-		{
-			whiteLongCastle = false;
-		}
-		else if (currMove.getFrom() == 7 && Piece::ROOK)
-		{
-			whiteShortCastle = false;
-		}
-
-		if (currMove.isCastling())
-		{
-			pieceArray[4] = 0;
-			bitboards[0][Piece::KING] = 0;
-			bitboards[0][0] ^= bitPositions[4];
-			allCombined ^= bitPositions[4];
-			if (currMove.getTo() == 2)
-			{
-				pieceArray[2] = Piece::KING | Piece::WHITE;
-				pieceArray[3] = Piece::ROOK | Piece::WHITE;
-				pieceArray[0] = 0;
-
-				bitboards[0][Piece::KING] = bitPositions[2];
-				bitboards[0][0] |= bitPositions[2];
-				allCombined |= bitPositions[2];
-
-				bitboards[0][Piece::ROOK] |= bitPositions[3];
-				bitboards[0][0] |= bitPositions[3];
-				allCombined |= bitPositions[3];
-
-				bitboards[0][Piece::ROOK] ^= bitPositions[0];
-				bitboards[0][0] ^= bitPositions[0];
-				allCombined ^= bitPositions[0];
-			}
-			else
-			{
-				pieceArray[6] = Piece::KING | Piece::WHITE;
-				pieceArray[5] = Piece::ROOK | Piece::WHITE;
-				pieceArray[7] = 0;
-
-				bitboards[0][Piece::KING] = bitPositions[6];
-				bitboards[0][0] |= bitPositions[6];
-				allCombined |= bitPositions[6];
-
-				bitboards[0][Piece::ROOK] |= bitPositions[5];
-				bitboards[0][0] |= bitPositions[5];
-				allCombined |= bitPositions[5];
-
-				bitboards[0][Piece::ROOK] ^= bitPositions[7];
-				bitboards[0][0] ^= bitPositions[7];
-				allCombined ^= bitPositions[7];
-			}
-		}
-		else
-		{
-			normalMove(fromType, toType, fromBit, toBit, currMove);
-		}
+		rookKingMove(fromType, toType, fromBit, toBit, currMove);
 	}
 	else if (fromType == Piece::KNIGHT || fromType == Piece::BISHOP || fromType == Piece::QUEEN)
 	{
@@ -81,42 +22,7 @@ void Board::makeMove(Move currMove)
 	}
 	else
 	{
-
-		if (currMove.isPassant())
-		{
-			int sideShift = (currMove.getTo() % 8) - (currMove.getFrom() % 8);
-
-			// Updates friendly piece and combined Bitboards
-			bitboards[0][fromType] ^= fromBit;
-			bitboards[0][0] ^= fromBit;
-
-			bitboards[0][fromType] |= toBit;
-			bitboards[0][0] |= toBit;
-
-			// Updates opponents piece and combined Bitboards if there is a capture
-			bitboards[1][Piece::PAWN] ^= bitPositions[currMove.getFrom() + sideShift];
-			bitboards[1][0] ^= bitPositions[currMove.getFrom() + sideShift];
-
-			// Updates combined board
-			allCombined ^= fromBit;
-			allCombined |= toBit;
-			allCombined ^= bitPositions[currMove.getFrom() + sideShift];
-
-			// Updates the piece array
-			pieceArray[currMove.getTo()] = pieceArray[currMove.getFrom()] & 15;
-			pieceArray[currMove.getFrom()] = 0;
-			pieceArray[currMove.getFrom() + sideShift] = 0;
-		}
-		else
-		{
-
-			normalMove(fromType, toType, fromBit, toBit, currMove);
-
-			if ((currMove.getTo() / 8) - (currMove.getFrom() / 8) == 2)
-			{
-				passantSquare = currMove.getTo() - 8;
-			}
-		}
+		pawnMove(fromType, toType, fromBit, toBit, currMove);
 	}
 }
 
@@ -143,6 +49,109 @@ void Board::normalMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitbo
 	// Updates the piece array
 	pieceArray[currMove.getTo()] = pieceArray[currMove.getFrom()] & 15;
 	pieceArray[currMove.getFrom()] = 0;
+}
+
+void Board::rookKingMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove)
+{
+	if (fromType == Piece::KING)
+	{
+		whiteShortCastle = whiteLongCastle = false;
+	}
+	else if (currMove.getFrom() == 0 && Piece::ROOK)
+	{
+		whiteLongCastle = false;
+	}
+	else if (currMove.getFrom() == 7 && Piece::ROOK)
+	{
+		whiteShortCastle = false;
+	}
+
+	if (currMove.isCastling())
+	{
+		pieceArray[4] = 0;
+		bitboards[0][Piece::KING] = 0;
+		bitboards[0][0] ^= bitPositions[4];
+		allCombined ^= bitPositions[4];
+		if (currMove.getTo() == 2)
+		{
+			pieceArray[2] = Piece::KING | Piece::WHITE;
+			pieceArray[3] = Piece::ROOK | Piece::WHITE;
+			pieceArray[0] = 0;
+
+			bitboards[0][Piece::KING] = bitPositions[2];
+			bitboards[0][0] |= bitPositions[2];
+			allCombined |= bitPositions[2];
+
+			bitboards[0][Piece::ROOK] |= bitPositions[3];
+			bitboards[0][0] |= bitPositions[3];
+			allCombined |= bitPositions[3];
+
+			bitboards[0][Piece::ROOK] ^= bitPositions[0];
+			bitboards[0][0] ^= bitPositions[0];
+			allCombined ^= bitPositions[0];
+		}
+		else
+		{
+			pieceArray[6] = Piece::KING | Piece::WHITE;
+			pieceArray[5] = Piece::ROOK | Piece::WHITE;
+			pieceArray[7] = 0;
+
+			bitboards[0][Piece::KING] = bitPositions[6];
+			bitboards[0][0] |= bitPositions[6];
+			allCombined |= bitPositions[6];
+
+			bitboards[0][Piece::ROOK] |= bitPositions[5];
+			bitboards[0][0] |= bitPositions[5];
+			allCombined |= bitPositions[5];
+
+			bitboards[0][Piece::ROOK] ^= bitPositions[7];
+			bitboards[0][0] ^= bitPositions[7];
+			allCombined ^= bitPositions[7];
+		}
+	}
+	else
+	{
+		normalMove(fromType, toType, fromBit, toBit, currMove);
+	}
+}
+
+void Board::pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove)
+{
+	if (currMove.isPassant())
+	{
+		int sideShift = (currMove.getTo() % 8) - (currMove.getFrom() % 8);
+
+		// Updates friendly piece and combined Bitboards
+		bitboards[0][fromType] ^= fromBit;
+		bitboards[0][0] ^= fromBit;
+
+		bitboards[0][fromType] |= toBit;
+		bitboards[0][0] |= toBit;
+
+		// Updates opponents piece and combined Bitboards if there is a capture
+		bitboards[1][Piece::PAWN] ^= bitPositions[currMove.getFrom() + sideShift];
+		bitboards[1][0] ^= bitPositions[currMove.getFrom() + sideShift];
+
+		// Updates combined board
+		allCombined ^= fromBit;
+		allCombined |= toBit;
+		allCombined ^= bitPositions[currMove.getFrom() + sideShift];
+
+		// Updates the piece array
+		pieceArray[currMove.getTo()] = pieceArray[currMove.getFrom()] & 15;
+		pieceArray[currMove.getFrom()] = 0;
+		pieceArray[currMove.getFrom() + sideShift] = 0;
+	}
+	else
+	{
+
+		normalMove(fromType, toType, fromBit, toBit, currMove);
+
+		if ((currMove.getTo() / 8) - (currMove.getFrom() / 8) == 2)
+		{
+			passantSquare = currMove.getTo() - 8;
+		}
+	}
 }
 
 void Board::addMove(Move moveToAdd)

@@ -53,6 +53,8 @@ public:
     Board(std::string fenSring);
     void makeMove(Move currMove);
     void normalMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
+    void rookKingMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
+    void pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
     void unmakeMove(Move currMove);
     bool isInCheck();
     void addMove(Move moveToAdd);
