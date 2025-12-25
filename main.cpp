@@ -4,6 +4,6 @@
 int main()
 {
     Board testBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    std::cout << testBoard.whiteKing << std::endl;
+    std::cout << testBoard.bitboards[0][6] << std::endl;
     testBoard.printChessBoard();
 }

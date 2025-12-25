@@ -6,17 +6,16 @@
 class Piece
 {
 public:
-    static const uint8_t Pawn = 1;
-    static const uint8_t Knight = 2;
-    static const uint8_t Bishop = 3;
-    static const uint8_t Rook = 4;
-    static const uint8_t Queen = 5;
-    static const uint8_t King = 6;
+    static const uint8_t PAWN = 1;
+    static const uint8_t KNIGHT = 2;
+    static const uint8_t BISHOP = 3;
+    static const uint8_t ROOK = 4;
+    static const uint8_t QUEEN = 5;
+    static const uint8_t KING = 6;
+    static const uint8_t TYPE_MASK = 7;
 
-    static const uint8_t White = 0;
-    static const uint8_t Black = 8;
-
-    static const uint8_t Pinned = 16;
+    static const uint8_t WHITE = 0;
+    static const uint8_t BLACK = 8;
 };
 
 #endif

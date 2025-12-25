@@ -1,37 +1,37 @@
 #include "movegen.h"
+#include "board.h"
 #include <iostream>
 
 void MoveGen::generateMoves(Board &board)
 {
     for (uint8_t i = 0; i < 64; i++)
     {
-        Bitboard bitPos = bitPositions[i];
-        Bitboard colorMask = board.isWhiteTurn ? board.whiteCombined : board.blackCombined;
+        Bitboard bitPos = Board::bitPositions[i];
 
-        if ((bitPos & colorMask) == 0)
+        if ((bitPos & board.bitboards[0][0]) == 0)
             continue;
 
         int currPiece = board.pieceArray[i];
 
         switch (currPiece & 7)
         {
-        case Piece::Pawn:
+        case Piece::PAWN:
             pawnMoves(board, i, bitPos);
             break;
-        case Piece::Knight:
+        case Piece::KNIGHT:
             knightMoves(board, i, bitPos);
             break;
-        case Piece::Bishop:
+        case Piece::BISHOP:
             bishopMoves(board, i, bitPos);
             break;
-        case Piece::Rook:
+        case Piece::ROOK:
             rookMoves(board, i, bitPos);
             break;
-        case Piece::Queen:
+        case Piece::QUEEN:
             bishopMoves(board, i, bitPos);
             rookMoves(board, i, bitPos);
             break;
-        case Piece::King:
+        case Piece::KING:
             kingMoves(board, i, bitPos);
             break;
         default:
@@ -43,7 +43,7 @@ void MoveGen::generateMoves(Board &board)
 
 void MoveGen::pawnMoves(Board &board, uint8_t startPos, Bitboard bitPos)
 {
-    Bitboard opponentPieces = board.blackCombined;
+    Bitboard opponentPieces = board.bitboards[1][0];
 
     if (startPos % 8 != 0 && ((bitPos << 7) & opponentPieces) != 0 && tryMove(board, Move(startPos, startPos + 7)))
     {

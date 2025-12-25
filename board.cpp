@@ -5,7 +5,42 @@
 
 void Board::makeMove(Move currMove)
 {
-    // TODO: Write makeMove
+    Bitboard fromBit = bitPositions[currMove.getFrom()];
+    Bitboard toBit = bitPositions[currMove.getTo()];
+    uint8_t fromType = pieceArray[currMove.getFrom()] & Piece::TYPE_MASK;
+    uint8_t toType = pieceArray[currMove.getTo()] & Piece::TYPE_MASK;
+
+    if (fromType == Piece::KNIGHT || fromType == Piece::BISHOP || fromType == Piece::QUEEN)
+    {
+
+        // Updates friendly piece and combined Bitboards
+        bitboards[0][fromType] ^= fromBit;
+        bitboards[0][0] ^= fromBit;
+
+        bitboards[0][fromType] |= toBit;
+        bitboards[0][0] |= toBit;
+
+        // Updates opponents piece and combined Bitboards if there is a capture
+        if (toType != 0)
+        {
+            bitboards[1][toType] ^= toBit;
+            bitboards[1][0] ^= toBit;
+        }
+
+        // Updates combined board
+        allCombined ^= fromBit;
+        allCombined |= toBit;
+
+        // Updates the piece array
+        pieceArray[currMove.getTo()] = pieceArray[currMove.getFrom()] & 15;
+        pieceArray[currMove.getFrom()] = 0;
+    }
+    else if ((fromType == Piece::ROOK || fromType == Piece::KING) && (whiteShortCastle || whiteLongCastle))
+    {
+    }
+    else
+    {
+    }
 }
 
 void Board::addMove(Move moveToAdd)
@@ -41,7 +76,7 @@ void Board::printChessBoard()
             const char *symbol = " ";
             if (type > 0 && type <= 6)
             {
-                if (color == Piece::White)
+                if (color == Piece::WHITE)
                 {
                     symbol = whitePieces[type];
                 }
@@ -62,8 +97,16 @@ void Board::printChessBoard()
 
 Board::Board(std::string fenString)
 {
-    whitePawns = whiteKnights = whiteBishops = whiteRooks = whiteQueens = whiteKing = 0;
-    blackPawns = blackKnights = blackBishops = blackRooks = blackQueens = blackKing = 0;
+    for (uint8_t color = 0; color < 2; color++)
+    {
+        for (uint8_t type = 0; type < 8; type++)
+        {
+            bitboards[color][type] = 0;
+        }
+    }
+
+    allCombined = 0;
+
     whiteShortCastle = whiteLongCastle = blackShortCastle = blackLongCastle = false;
     isWhiteTurn = true;
     passantSquare = 0;
@@ -103,52 +146,52 @@ Board::Board(std::string fenString)
         switch (currChar)
         {
         case 'P':
-            whitePawns += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::White + Piece::Pawn;
+            bitboards[0][Piece::PAWN] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::WHITE + Piece::PAWN;
             break;
         case 'N':
-            whiteKnights += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::White + Piece::Knight;
+            bitboards[0][Piece::KNIGHT] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::WHITE + Piece::KNIGHT;
             break;
         case 'B':
-            whiteBishops += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::White + Piece::Bishop;
+            bitboards[0][Piece::BISHOP] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::WHITE + Piece::BISHOP;
             break;
         case 'R':
-            whiteRooks += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::White + Piece::Rook;
+            bitboards[0][Piece::ROOK] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::WHITE + Piece::ROOK;
             break;
         case 'Q':
-            whiteQueens += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::White + Piece::Queen;
+            bitboards[0][Piece::QUEEN] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::WHITE + Piece::QUEEN;
             break;
         case 'K':
-            whiteKing += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::White + Piece::King;
+            bitboards[0][Piece::KING] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::WHITE + Piece::KING;
             break;
         case 'p':
-            blackPawns += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::Black + Piece::Pawn;
+            bitboards[1][Piece::PAWN] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::BLACK + Piece::PAWN;
             break;
         case 'n':
-            blackKnights += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::Black + Piece::Knight;
+            bitboards[1][Piece::KNIGHT] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::BLACK + Piece::KNIGHT;
             break;
         case 'b':
-            blackBishops += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::Black + Piece::Bishop;
+            bitboards[1][Piece::BISHOP] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::BLACK + Piece::BISHOP;
             break;
         case 'r':
-            blackRooks += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::Black + Piece::Rook;
+            bitboards[1][Piece::ROOK] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::BLACK + Piece::ROOK;
             break;
         case 'q':
-            blackQueens += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::Black + Piece::Queen;
+            bitboards[1][Piece::QUEEN] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::BLACK + Piece::QUEEN;
             break;
         case 'k':
-            blackKing += (int)pow(2, currSquare);
-            pieceArray[currSquare] = Piece::Black + Piece::King;
+            bitboards[1][Piece::KING] += (int)pow(2, currSquare);
+            pieceArray[currSquare] = Piece::BLACK + Piece::KING;
             break;
         }
 
@@ -246,23 +289,13 @@ Board::Board(std::string fenString)
 
 void Board::nextTurn()
 {
-    whitePawns = __builtin_bswap64(whitePawns);
-    whiteKnights = __builtin_bswap64(whiteKnights);
-    whiteBishops = __builtin_bswap64(whiteBishops);
-    whiteRooks = __builtin_bswap64(whiteRooks);
-    whiteQueens = __builtin_bswap64(whiteQueens);
-    whiteKing = __builtin_bswap64(whiteKing);
-    whiteCombined = __builtin_bswap64(whiteCombined);
-    whitePinned = __builtin_bswap64(whitePinned);
-
-    blackPawns = __builtin_bswap64(blackPawns);
-    blackKnights = __builtin_bswap64(blackKnights);
-    blackBishops = __builtin_bswap64(blackBishops);
-    blackRooks = __builtin_bswap64(blackRooks);
-    blackQueens = __builtin_bswap64(blackQueens);
-    blackKing = __builtin_bswap64(blackKing);
-    blackCombined = __builtin_bswap64(blackCombined);
-    blackPinned = __builtin_bswap64(blackPinned);
+    for (uint8_t color = 0; color < 2; color++)
+    {
+        for (uint8_t type = 0; type < 8; type++)
+        {
+            bitboards[color][type] = __builtin_bswap64(bitboards[color][type]);
+        }
+    }
 
     allCombined = __builtin_bswap64(allCombined);
 
