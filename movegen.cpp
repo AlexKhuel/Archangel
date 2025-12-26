@@ -2,48 +2,71 @@
 #include "board.h"
 #include <iostream>
 #include <bit>
+#include <iostream>
+#include <chrono>
+
+uint64_t MoveGen::perft(Board &board, int depth)
+{ // PASS BY VALUE (Copy the board)
+	if (depth == 0)
+		return 1;
+
+	MoveList list;
+	generateMoves(board, list);
+	uint64_t nodes = 0;
+
+	for (int i = 0; i < list.count; i++)
+	{
+		Board nextBoard = board; // Create a fresh copy of the current state
+		nextBoard.makeMove(list.moveList[i]);
+		// nextBoard.makeMove already calls nextTurn(), so perspective is flipped
+
+		nodes += perft(nextBoard, depth - 1);
+	}
+	return nodes;
+}
 
 void MoveGen::generateMoves(Board &board, MoveList &list)
 {
 	for (uint8_t i = 0; i < 64; i++)
 	{
-		Bitboard bitPos = Board::bitPositions[i];
+		Bitboard bitPos = 1ULL << i;
 
-		if ((bitPos & board.bitboards[0][0]) == 0)
-			continue;
-
-		int currPiece = board.pieceArray[i];
-
-		switch (currPiece & 7)
+		if ((bitPos & board.bitboards[0][0]) != 0)
 		{
-		case Piece::PAWN:
-			pawnGen(board, i, bitPos, list);
-			break;
-		case Piece::KNIGHT:
-			knightGen(board, i, bitPos, list);
-			break;
-		case Piece::BISHOP:
-			bishopGen(board, i, bitPos, list);
-			break;
-		case Piece::ROOK:
-			rookGen(board, i, bitPos, list);
-			break;
-		case Piece::QUEEN:
-			bishopGen(board, i, bitPos, list);
-			rookGen(board, i, bitPos, list);
-			break;
-		case Piece::KING:
-			kingGen(board, i, bitPos, list);
-			break;
-		default:
-			std::cout << "You have reached the default case. This is bad." << std::endl;
-			break;
+			int currPiece = board.pieceArray[i];
+
+			switch (currPiece & 7)
+			{
+			case Piece::PAWN:
+				pawnGen(board, i, bitPos, list);
+				break;
+			case Piece::KNIGHT:
+				knightGen(board, i, list);
+				break;
+			case Piece::BISHOP:
+				bishopGen(board, i, bitPos, list);
+				break;
+			case Piece::ROOK:
+				rookGen(board, i, bitPos, list);
+				break;
+			case Piece::QUEEN:
+				bishopGen(board, i, bitPos, list);
+				rookGen(board, i, bitPos, list);
+				break;
+			case Piece::KING:
+				kingGen(board, i, bitPos, list);
+				break;
+			default:
+				std::cout << "You have reached the default case. This is bad." << std::endl;
+				break;
+			}
 		}
 	}
 }
 
 void MoveGen::pawnGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList &list)
 {
+
 	Bitboard opponentPieces = board.bitboards[1][0];
 
 	if (startPos % 8 != 0 && ((bitPos << 7) & opponentPieces) != 0 && tryMove(board, Move(startPos, startPos + 7)))
@@ -74,7 +97,7 @@ void MoveGen::pawnGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 			list.add(Move(startPos, startPos + 9));
 		}
 	}
-	if ((bitPos << 8 & board.allCombined) == 0 && tryMove(board, Move(startPos, startPos + 8)))
+	if (((bitPos << 8) & board.allCombined) == 0 && tryMove(board, Move(startPos, startPos + 8)))
 	{
 		if (startPos / 8 == 6)
 		{
@@ -88,7 +111,7 @@ void MoveGen::pawnGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 			list.add(Move(startPos, startPos + 8));
 		}
 	}
-	if ((startPos / 8) == 1 && (bitPos << 8 & board.allCombined) == 0 && (bitPos << 16 & board.allCombined) == 0 && tryMove(board, Move(startPos, startPos + 16)))
+	if ((startPos / 8) == 1 && ((bitPos << 8) & board.allCombined) == 0 && (bitPos << 16 & board.allCombined) == 0 && tryMove(board, Move(startPos, startPos + 16)))
 	{
 		list.add(Move(startPos, startPos + 16));
 	}
@@ -102,7 +125,7 @@ void MoveGen::pawnGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 	}
 }
 
-void MoveGen::knightGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList &list)
+void MoveGen::knightGen(Board &board, uint8_t startPos, MoveList &list)
 {
 	for (int i = 0; i < 8 && knightMoves[startPos][i] != 255; i++)
 	{
@@ -122,7 +145,7 @@ void MoveGen::bishopGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveLis
 		{
 			int targetPos = startPos + directions[i] * magnitude;
 
-			uint8_t shift = directions[i] * magnitude;
+			int shift = directions[i] * magnitude;
 			Bitboard endBitPos = i % 2 == 0 ? bitPos >> std::abs(shift) : bitPos << std::abs(shift);
 
 			if ((board.bitboards[0][0] & endBitPos) != 0)
@@ -151,7 +174,7 @@ void MoveGen::rookGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 		{
 			int targetPos = startPos + directions[i] * magnitude;
 
-			uint8_t shift = directions[i] * magnitude;
+			int shift = directions[i] * magnitude;
 			Bitboard endBitPos = i % 2 == 0 ? bitPos >> std::abs(shift) : bitPos << std::abs(shift);
 
 			if ((board.bitboards[0][0] & endBitPos) != 0)
@@ -218,9 +241,8 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 	{
 		for (int magnitude = 1; magnitude < disToEdge[targetSquare][i] + 1; magnitude++)
 		{
-			int targetPos = targetSquare + directions[i] * magnitude;
 
-			uint8_t shift = directions[i] * magnitude;
+			int shift = directions[i] * magnitude;
 			Bitboard endBitPos = i % 2 == 0 ? board.bitPositions[targetSquare] >> std::abs(shift) : board.bitPositions[targetSquare] << std::abs(shift);
 
 			if ((board.bitboards[0][0] & endBitPos) != 0)
@@ -247,9 +269,12 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 
 bool MoveGen::tryMove(Board &board, Move testMove)
 {
-	BoardState oldState = board.saveState();
-	board.makeMove(testMove);
-	bool legal = !isAttacked(board, std::countr_zero(board.bitboards[0][Piece::KING]));
-	board.unmakeMove(oldState);
-	return legal;
+	return true;
+	/*
+	 BoardState oldState = board.saveState();
+	 board.makeMove(testMove);
+	 bool legal = !isAttacked(board, std::countr_zero(board.bitboards[0][Piece::KING]));
+	 board.unmakeMove(oldState);
+	 return legal;
+	 */
 }

@@ -5,6 +5,8 @@
 
 void Board::makeMove(Move currMove)
 {
+	moveHistory.push_back(currMove);
+
 	Bitboard fromBit = bitPositions[currMove.getFrom()];
 	Bitboard toBit = bitPositions[currMove.getTo()];
 	uint8_t fromType = pieceArray[currMove.getFrom()] & Piece::TYPE_MASK;
@@ -24,6 +26,8 @@ void Board::makeMove(Move currMove)
 	{
 		pawnMove(fromType, toType, fromBit, toBit, currMove);
 	}
+
+	nextTurn();
 }
 
 void Board::normalMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove)
@@ -156,6 +160,8 @@ void Board::pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboar
 
 void Board::unmakeMove(const BoardState &oldBoardState)
 {
+	if (!moveHistory.empty())
+		moveHistory.pop_back();
 	// 1. Restore the Bitboard array (2x8 = 16 elements)
 	// We treat the 2D array as a flat block of 16 Bitboards
 	std::copy(&oldBoardState.bitboards[0][0], &oldBoardState.bitboards[0][0] + 16, &bitboards[0][0]);
@@ -172,8 +178,11 @@ void Board::unmakeMove(const BoardState &oldBoardState)
 	blackLongCastle = oldBoardState.blackLongCastle;
 
 	passantSquare = oldBoardState.passantSquare;
-	;
 	halfmoveClock = oldBoardState.halfmoveClock;
+
+	if (evenNumMove)
+		fullmoveCounter--;
+	evenNumMove = !evenNumMove;
 }
 
 void Board::printChessBoard()
@@ -244,7 +253,8 @@ Board::Board(std::string fenString)
 	int file = 0;
 	size_t i = 0;
 
-	// Section 1: Parse board position
+	// 1. Ensure rank/file starts correctly (Rank 7 is top of FEN, Rank 0 is bottom)
+
 	while (i < fenString.length() && fenString[i] != ' ')
 	{
 		char currChar = fenString[i];
@@ -265,64 +275,44 @@ Board::Board(std::string fenString)
 		}
 
 		int currSquare = rank * 8 + file;
+		uint64_t bit = 1ULL << currSquare; // THE CORRECT WAY TO GET BIT
 
-		switch (currChar)
-		{
-		case 'P':
-			bitboards[0][Piece::PAWN] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::WHITE + Piece::PAWN;
-			break;
-		case 'N':
-			bitboards[0][Piece::KNIGHT] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::WHITE + Piece::KNIGHT;
-			break;
-		case 'B':
-			bitboards[0][Piece::BISHOP] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::WHITE + Piece::BISHOP;
-			break;
-		case 'R':
-			bitboards[0][Piece::ROOK] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::WHITE + Piece::ROOK;
-			break;
-		case 'Q':
-			bitboards[0][Piece::QUEEN] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::WHITE + Piece::QUEEN;
-			break;
-		case 'K':
-			bitboards[0][Piece::KING] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::WHITE + Piece::KING;
-			break;
-		case 'p':
-			bitboards[1][Piece::PAWN] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::BLACK + Piece::PAWN;
-			break;
-		case 'n':
-			bitboards[1][Piece::KNIGHT] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::BLACK + Piece::KNIGHT;
-			break;
-		case 'b':
-			bitboards[1][Piece::BISHOP] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::BLACK + Piece::BISHOP;
-			break;
-		case 'r':
-			bitboards[1][Piece::ROOK] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::BLACK + Piece::ROOK;
-			break;
-		case 'q':
-			bitboards[1][Piece::QUEEN] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::BLACK + Piece::QUEEN;
-			break;
-		case 'k':
-			bitboards[1][Piece::KING] += (int)pow(2, currSquare);
-			pieceArray[currSquare] = Piece::BLACK + Piece::KING;
-			break;
-		}
+		// Determine color and piece type
+		int color = islower(currChar) ? 1 : 0; // lowercase = black (1), uppercase = white (0)
+
+		// Map char to piece type (using a small helper or manual switch)
+		int type;
+		char lower = tolower(currChar);
+		if (lower == 'p')
+			type = Piece::PAWN;
+		else if (lower == 'n')
+			type = Piece::KNIGHT;
+		else if (lower == 'b')
+			type = Piece::BISHOP;
+		else if (lower == 'r')
+			type = Piece::ROOK;
+		else if (lower == 'q')
+			type = Piece::QUEEN;
+		else if (lower == 'k')
+			type = Piece::KING;
+
+		// SET THE BITS
+		bitboards[color][type] |= bit;
+		pieceArray[currSquare] = (color == 0 ? Piece::WHITE : Piece::BLACK) + type;
 
 		file++;
 		i++;
 	}
 
-	i++;
+	// Combine everything correctly
+	bitboards[0][0] = 0; // Reset index 0 to be sure
+	bitboards[1][0] = 0;
+	for (int t = 1; t <= 6; t++)
+	{
+		bitboards[0][0] |= bitboards[0][t]; // White combined
+		bitboards[1][0] |= bitboards[1][t]; // Black combined
+	}
+	allCombined = bitboards[0][0] | bitboards[1][0];
 
 	// Section 2: Active color
 	if (i < fenString.length())
@@ -420,9 +410,9 @@ Board::Board(std::string fenString)
 
 		allCombined = __builtin_bswap64(allCombined);
 
-		for (int i = 0; i < 32; i++)
+		for (int index = 0; index < 32; index++)
 		{
-			std::swap(pieceArray[i], pieceArray[63 - i]);
+			std::swap(pieceArray[index], pieceArray[63 - index]);
 		}
 
 		std::swap(whiteShortCastle, blackShortCastle);
@@ -432,26 +422,63 @@ Board::Board(std::string fenString)
 
 void Board::nextTurn()
 {
-	for (uint8_t color = 0; color < 2; color++)
+	// 1. Swap the White and Black bitboard sets
+	for (int i = 0; i < 8; ++i)
 	{
-		for (uint8_t type = 0; type < 8; type++)
+		std::swap(bitboards[0][i], bitboards[1][i]);
+	}
+
+	// 2. Vertically flip all bitboards (0-6 are pieces, 0 is combined)
+	auto flipBits = [](Bitboard &b)
+	{
+		b = ((b >> 8) & 0x00FF00FF00FF00FFULL) | ((b << 8) & 0xFF00FF00FF00FF00ULL);
+		b = ((b >> 16) & 0x0000FFFF0000FFFFULL) | ((b << 16) & 0xFFFF0000FFFF0000ULL);
+		b = (b >> 32) | (b << 32);
+	};
+
+	for (int i = 0; i < 7; ++i)
+	{ // Flipping 0 (combined) through 6 (King)
+		flipBits(bitboards[0][i]);
+		flipBits(bitboards[1][i]);
+	}
+	flipBits(allCombined);
+
+	// 3. Rebuild pieceArray from the flipped bitboards
+	// Clear array first
+	for (int i = 0; i < 64; ++i)
+		pieceArray[i] = 0;
+
+	for (uint8_t color = 0; color < 2; ++color)
+	{
+		// We use bit 3 for Black (8) and 0 for White as per your Piece class
+		uint8_t colorMask = (color == 0) ? Piece::WHITE : Piece::BLACK;
+
+		for (uint8_t type = Piece::PAWN; type <= Piece::KING; ++type)
 		{
-			bitboards[color][type] = __builtin_bswap64(bitboards[color][type]);
+			Bitboard temp = bitboards[color][type];
+			while (temp)
+			{
+				// Get index of the least significant bit set
+				int sq = __builtin_ctzll(temp);
+				pieceArray[sq] = type | colorMask;
+				temp &= (temp - 1); // Clear the bit
+			}
 		}
 	}
 
-	allCombined = __builtin_bswap64(allCombined);
-
-	for (int i = 0; i < 32; i++)
-	{
-		std::swap(pieceArray[i], pieceArray[63 - i]);
-	}
-
+	// 4. Handle State Variables
 	std::swap(whiteShortCastle, blackShortCastle);
 	std::swap(whiteLongCastle, blackLongCastle);
 
-	if (!evenNumMove)
+	if (passantSquare < 64)
+	{
+		passantSquare ^= 56;
+	}
+
+	if (evenNumMove)
+	{
 		fullmoveCounter++;
+	}
 	evenNumMove = !evenNumMove;
 }
 

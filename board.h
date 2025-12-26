@@ -2,6 +2,8 @@
 #define BOARD_H
 
 #include <cstdint>
+#include <string>
+#include <vector>
 #include "move.h"
 #include "movelist.h"
 #include "types.h"
@@ -22,7 +24,7 @@ class Board
 {
 
 public:
-    Bitboard bitboards[2][8]; // 0 is combined, 1-6 holds piece type, 8 is pinned. White is 0, 1 is black
+    Bitboard bitboards[2][8]; // 0 is combined, 1-6 holds piece type, 7 is pinned. White is 0, 1 is black
 
     Bitboard allCombined;
 
@@ -38,6 +40,8 @@ public:
 
     bool evenNumMove;
     uint16_t fullmoveCounter;
+
+    std::vector<Move> moveHistory;
 
     static constexpr Bitboard bitPositions[64] = {
         0x0000000000000001ULL, 0x0000000000000002ULL, 0x0000000000000004ULL, 0x0000000000000008ULL,
@@ -64,7 +68,6 @@ public:
     void rookKingMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
     void pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
     void unmakeMove(const BoardState &anchor);
-
     BoardState saveState();
     void printChessBoard();
     void nextTurn();
