@@ -154,27 +154,26 @@ void Board::pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboar
 	}
 }
 
-void Board::unmakeMove(const BoardState &anchor)
+void Board::unmakeMove(const BoardState &oldBoardState)
 {
 	// 1. Restore the Bitboard array (2x8 = 16 elements)
 	// We treat the 2D array as a flat block of 16 Bitboards
-	std::copy(&anchor.bitboards[0][0], &anchor.bitboards[0][0] + 16, &bitboards[0][0]);
+	std::copy(&oldBoardState.bitboards[0][0], &oldBoardState.bitboards[0][0] + 16, &bitboards[0][0]);
 
 	// 2. Restore the Piece Array (64 elements)
-	std::copy(anchor.pieceArray, anchor.pieceArray + 64, pieceArray);
+	std::copy(oldBoardState.pieceArray, oldBoardState.pieceArray + 64, pieceArray);
 
 	// 3. Restore the individual variables
-	allCombined = anchor.allCombined;
+	allCombined = oldBoardState.allCombined;
 
-	whiteShortCastle = anchor.whiteShortCastle;
-	whiteLongCastle = anchor.whiteLongCastle;
-	blackShortCastle = anchor.blackShortCastle;
-	blackLongCastle = anchor.blackLongCastle;
+	whiteShortCastle = oldBoardState.whiteShortCastle;
+	whiteLongCastle = oldBoardState.whiteLongCastle;
+	blackShortCastle = oldBoardState.blackShortCastle;
+	blackLongCastle = oldBoardState.blackLongCastle;
 
-	passantSquare = anchor.passantSquare;
-	halfmoveClock = anchor.halfmoveClock;
-
-	// Note: possibleMoves is usually regenerated, not restored.
+	passantSquare = oldBoardState.passantSquare;
+	;
+	halfmoveClock = oldBoardState.halfmoveClock;
 }
 
 void Board::printChessBoard()
@@ -237,7 +236,6 @@ Board::Board(std::string fenString)
 	passantSquare = 0;
 	halfmoveClock = 0;
 	fullmoveCounter = 1;
-	possibleMoves.clear();
 
 	for (int i = 0; i < 64; i++)
 		pieceArray[i] = 0;
@@ -443,8 +441,6 @@ void Board::nextTurn()
 	}
 
 	allCombined = __builtin_bswap64(allCombined);
-
-	clearMoveList();
 
 	for (int i = 0; i < 32; i++)
 	{

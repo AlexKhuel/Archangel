@@ -64,7 +64,7 @@ public:
     void rookKingMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
     void pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
     void unmakeMove(const BoardState &anchor);
-    bool isInCheck();
+
     BoardState saveState();
     void printChessBoard();
     void nextTurn();
