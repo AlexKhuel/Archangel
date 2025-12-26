@@ -5,24 +5,44 @@
 #include <iostream>
 #include <chrono>
 
-uint64_t MoveGen::perft(Board &board, int depth)
-{ // PASS BY VALUE (Copy the board)
+uint64_t MoveGen::perft(Board &board, int depth, bool isRoot = true)
+{
 	if (depth == 0)
 		return 1;
 
 	MoveList list;
 	generateMoves(board, list);
-	uint64_t nodes = 0;
+	uint64_t totalNodes = 0;
 
 	for (int i = 0; i < list.count; i++)
 	{
-		Board nextBoard = board; // Create a fresh copy of the current state
-		nextBoard.makeMove(list.moveList[i]);
-		// nextBoard.makeMove already calls nextTurn(), so perspective is flipped
+		Board nextBoard = board;
+		auto move = list.moveList[i];
+		nextBoard.makeMove(move);
 
-		nodes += perft(nextBoard, depth - 1);
+		// This call must not have the isRoot flag
+		uint64_t branchNodes = perft(nextBoard, depth - 1, false);
+		totalNodes += branchNodes;
+
+		if (isRoot)
+		{
+			// a1 = 0 indexing logic
+			char fromFile = 'a' + (move.getFrom() % 8);
+			int fromRank = (move.getFrom() / 8) + 1;
+			char toFile = 'a' + (move.getTo() % 8);
+			int toRank = (move.getTo() / 8) + 1;
+
+			std::cout << fromFile << fromRank << toFile << toRank << " " << branchNodes << std::endl;
+		}
 	}
-	return nodes;
+
+	if (isRoot)
+	{
+		std::cout << "\n"
+				  << totalNodes << std::endl;
+	}
+
+	return totalNodes;
 }
 
 void MoveGen::generateMoves(Board &board, MoveList &list)
@@ -214,7 +234,8 @@ void MoveGen::kingGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 	}
 
 	// Handles short castling
-	if (board.whiteShortCastle &&
+	if ((board.pieceArray[startPos] & 8) == Piece::WHITE &&
+		board.whiteShortCastle &&
 		(board.allCombined & board.bitPositions[5]) == 0 &&
 		(board.allCombined & board.bitPositions[6]) == 0 &&
 		!isAttacked(board, 4) && !isAttacked(board, 5) && !isAttacked(board, 6) &&
@@ -237,7 +258,7 @@ void MoveGen::kingGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 
 bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 {
-	for (uint8_t i = 0; i < 8; i++)
+	for (uint8_t i = 4; i < 8; i++)
 	{
 		for (int magnitude = 1; magnitude < disToEdge[targetSquare][i] + 1; magnitude++)
 		{
@@ -249,7 +270,26 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 			{
 				break;
 			}
-			else if ((board.bitboards[1][0] & endBitPos) != 0 || (board.allCombined & endBitPos) == 0)
+			else if ((board.bitboards[1][0] & endBitPos) != 0 && ((board.bitboards[1][Piece::BISHOP] & endBitPos) != 0 || (board.bitboards[1][Piece::QUEEN] & endBitPos) != 0))
+			{
+				return true;
+			}
+		}
+	}
+
+	for (uint8_t i = 0; i < 4; i++)
+	{
+		for (int magnitude = 1; magnitude < disToEdge[targetSquare][i] + 1; magnitude++)
+		{
+
+			int shift = directions[i] * magnitude;
+			Bitboard endBitPos = i % 2 == 0 ? board.bitPositions[targetSquare] >> std::abs(shift) : board.bitPositions[targetSquare] << std::abs(shift);
+
+			if ((board.bitboards[0][0] & endBitPos) != 0)
+			{
+				break;
+			}
+			else if ((board.bitboards[1][0] & endBitPos) != 0 && ((board.bitboards[1][Piece::ROOK] & endBitPos) != 0 || (board.bitboards[1][Piece::QUEEN] & endBitPos) != 0))
 			{
 				return true;
 			}
@@ -259,7 +299,7 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 	for (int i = 0; i < 8 && knightMoves[targetSquare][i] != 255; i++)
 	{
 		uint8_t endPos = knightMoves[targetSquare][i];
-		if ((board.bitboards[0][0] & board.bitPositions[endPos]) == 0)
+		if ((board.bitboards[1][Piece::KNIGHT] & board.bitPositions[endPos]) != 0)
 		{
 			return true;
 		}
@@ -269,12 +309,9 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 
 bool MoveGen::tryMove(Board &board, Move testMove)
 {
-	return true;
-	/*
-	 BoardState oldState = board.saveState();
-	 board.makeMove(testMove);
-	 bool legal = !isAttacked(board, std::countr_zero(board.bitboards[0][Piece::KING]));
-	 board.unmakeMove(oldState);
-	 return legal;
-	 */
+	BoardState oldState = board.saveState();
+	board.makeMove(testMove);
+	bool legal = !isAttacked(board, std::countr_zero(board.bitboards[0][Piece::KING]));
+	board.unmakeMove(oldState);
+	return legal;
 }

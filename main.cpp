@@ -2,25 +2,50 @@
 #include "movegen.h"
 #include <iostream>
 
-int main()
+int main(int argc, char *argv[])
 {
-    Board testBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
-    auto start = std::chrono::steady_clock::now();
-
-    for (int depth = 1; depth < 11; depth++)
+    // 1. HANDLE DIRECT COMMAND LINE ARGUMENTS (for ./check.sh 3 "FEN")
+    if (argc >= 3)
     {
-        auto now = std::chrono::steady_clock::now();
+        int depth = std::stoi(argv[1]);
+        std::string fen = argv[2];
+        Board perftBoard(fen);
+        MoveGen::perft(perftBoard, depth, true);
+        return 0;
+    }
 
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+    // 2. HANDLE INTERACTIVE UCI/PERFTREE STDIN
+    std::string line;
+    Board currentBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
-        uint64_t moveCount = MoveGen::perft(testBoard, depth);
-
-        std::cout << "Depth: " << depth << " ply   Result: " << moveCount << " Positions    Time: " << elapsed.count() << " milliseconds" << std::endl;
-
-        if (elapsed.count() >= 10000)
+    while (std::getline(std::cin, line))
+    {
+        if (line == "uci")
+        {
+            std::cout << "id name Archangel" << std::endl;
+            std::cout << "uciok" << std::endl;
+        }
+        else if (line == "isready")
+        {
+            std::cout << "readyok" << std::endl;
+        }
+        // Handle "position fen ..."
+        else if (line.substr(0, 12) == "position fen")
+        {
+            std::string fen = line.substr(13);
+            currentBoard = Board(fen);
+        }
+        // Handle "go perft X" or just "perft X"
+        else if (line.find("perft") != std::string::npos)
+        {
+            size_t pos = line.find_last_of(' ');
+            int depth = std::stoi(line.substr(pos + 1));
+            MoveGen::perft(currentBoard, depth, true);
+        }
+        else if (line == "quit")
         {
             break;
         }
     }
+    return 0;
 }

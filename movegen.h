@@ -11,7 +11,7 @@ class MoveGen
 {
 
 public:
-    static uint64_t perft(Board &board, int depth);
+    static uint64_t perft(Board &board, int depth, bool isRoot);
     static void generateMoves(Board &board, MoveList &list);
     static bool isPinned(const Board &board, uint8_t currPiece);
 

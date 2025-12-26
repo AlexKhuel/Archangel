@@ -229,6 +229,8 @@ void Board::printChessBoard()
 
 Board::Board(std::string fenString)
 {
+	moveHistory.reserve(10);
+
 	bool swapLater = false;
 
 	for (uint8_t color = 0; color < 2; color++)
