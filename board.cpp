@@ -24,6 +24,10 @@ void Board::makeMove(Move currMove)
 		{
 			rookKingMove(fromType, toType, fromBit, toBit, currMove);
 		}
+		else
+		{
+			normalMove(fromType, toType, fromBit, toBit, currMove);
+		}
 	}
 	else if (fromType == Piece::KNIGHT || fromType == Piece::BISHOP || fromType == Piece::QUEEN)
 	{
@@ -45,7 +49,7 @@ void Board::makeMove(Move currMove)
 void Board::normalMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove)
 {
 	Bitboard *friendlyPieces = isWhiteTurn ? bitboards[0] : bitboards[1];
-	Bitboard *opponentPieces = isWhiteTurn ? bitboards[0] : bitboards[1];
+	Bitboard *opponentPieces = isWhiteTurn ? bitboards[1] : bitboards[0];
 	// Updates friendly piece and combined Bitboards
 	friendlyPieces[fromType] ^= fromBit;
 	friendlyPieces[0] ^= fromBit;
@@ -62,8 +66,7 @@ void Board::normalMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitbo
 	}
 
 	// Updates combined board
-	allCombined ^= fromBit;
-	allCombined ^= toBit;
+	allCombined = bitboards[0][0] | bitboards[1][0];
 
 	// Updates the piece array
 	pieceArray[currMove.getTo()] = pieceArray[currMove.getFrom()] & 15;
@@ -392,10 +395,9 @@ Board::Board(std::string fenString)
 		file++;
 		i++;
 	}
+	i++;
 
 	// Combine everything correctly
-	bitboards[0][0] = 0; // Reset index 0 to be sure
-	bitboards[1][0] = 0;
 	for (int t = 1; t <= 6; t++)
 	{
 		bitboards[0][0] |= bitboards[0][t]; // White combined
@@ -505,9 +507,6 @@ Board::Board(std::string fenString)
 	isWhiteTurnInitial = isWhiteTurn;
 	fullmoveCounterInitial = fullmoveCounter;
 }
-
-#include <string>
-#include <vector>
 
 Move Board::parseMove(std::string moveStr)
 {

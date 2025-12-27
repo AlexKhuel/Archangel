@@ -192,11 +192,11 @@ void MoveGen::pawnGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 		{
 			list.add(Move(startPos, startPos - 16));
 		}
-		if (startPos % 8 != 0 && board.passantSquare == startPos - 7 && tryMove(board, Move(startPos, startPos - 7)))
+		if (startPos % 8 != 7 && board.passantSquare == startPos - 7 && tryMove(board, Move(startPos, startPos - 7)))
 		{
 			list.add(Move(startPos, startPos - 7, Move::PASSANT));
 		}
-		if (startPos % 8 != 7 && board.passantSquare == startPos - 9 && tryMove(board, Move(startPos, startPos - 9)))
+		if (startPos % 8 != 0 && board.passantSquare == startPos - 9 && tryMove(board, Move(startPos, startPos - 9)))
 		{
 			list.add(Move(startPos, startPos - 9, Move::PASSANT));
 		}
@@ -283,19 +283,14 @@ void MoveGen::kingGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 {
 	Bitboard friendlyPieces = board.isWhiteTurn ? board.bitboards[0][0] : board.bitboards[1][0];
 	Bitboard opponentPieces = board.isWhiteTurn ? board.bitboards[1][0] : board.bitboards[0][0];
-	// Handles 1 square movement
-	for (uint8_t i = 0; i < 8; i++)
+
+	for (int i = 0; i < 8 && kingMoves[startPos][i] != 255; i++)
 	{
-		if (disToEdge[startPos][i] == 0)
-		{
-			continue;
-		}
+		uint8_t endPos = kingMoves[startPos][i];
 
-		Bitboard endBitPos = i % 2 == 0 ? bitPos >> std::abs(directions[i]) : bitPos << std::abs(directions[i]);
-
-		if ((friendlyPieces & endBitPos) == 0 && tryMove(board, Move(startPos, startPos + directions[i])))
+		if ((friendlyPieces & board.bitPositions[endPos]) == 0 && tryMove(board, Move(startPos, endPos)))
 		{
-			list.add(Move(startPos, startPos + directions[i]));
+			list.add(Move(startPos, endPos));
 		}
 	}
 
@@ -395,6 +390,7 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 bool MoveGen::tryMove(Board &board, Move testMove)
 {
 	Bitboard friendlyKing = board.isWhiteTurn ? board.bitboards[0][Piece::KING] : board.bitboards[1][Piece::KING];
+
 	board.makeMove(testMove);
 	bool legal = !isAttacked(board, std::countr_zero(friendlyKing));
 	board.unmakeMove();
