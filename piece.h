@@ -16,7 +16,7 @@ public:
 
     static const uint8_t WHITE = 0;
     static const uint8_t BLACK = 8;
-    static const uint8_t COLOR_MASK;
+    static const uint8_t COLOR_MASK = 8;
 };
 
 #endif

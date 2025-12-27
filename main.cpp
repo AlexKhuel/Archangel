@@ -1,51 +1,62 @@
 #include "board.h"
 #include "movegen.h"
+#include <sstream>
 #include <iostream>
+#include <string>
+#include <vector>
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
 
 int main(int argc, char *argv[])
 {
-    // 1. HANDLE DIRECT COMMAND LINE ARGUMENTS (for ./check.sh 3 "FEN")
-    if (argc >= 3)
+    // 1. Defaults
+    std::string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    int depth = 1;
+    std::string moveList = "";
+
+    // 2. Safely parse Depth (Arg 1)
+    if (argc > 1)
     {
-        int depth = std::stoi(argv[1]);
-        std::string fen = argv[2];
-        Board perftBoard(fen);
-        MoveGen::perft(perftBoard, depth, true);
-        return 0;
+
+        depth = std::stoi(argv[1]);
     }
 
-    // 2. HANDLE INTERACTIVE UCI/PERFTREE STDIN
-    std::string line;
-    Board currentBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
-    while (std::getline(std::cin, line))
+    // 3. Parse FEN (Arg 2)
+    if (argc > 2)
     {
-        if (line == "uci")
+        fen = argv[2];
+    }
+
+    // 4. Parse Move List (Arg 3)
+    if (argc > 3)
+    {
+        moveList = argv[3];
+    }
+
+    Board testBoard(fen);
+
+    // 5. Apply moves
+    if (!moveList.empty())
+    {
+        std::stringstream ss(moveList);
+        std::string mStr;
+        while (ss >> mStr)
         {
-            std::cout << "id name Archangel" << std::endl;
-            std::cout << "uciok" << std::endl;
-        }
-        else if (line == "isready")
-        {
-            std::cout << "readyok" << std::endl;
-        }
-        // Handle "position fen ..."
-        else if (line.substr(0, 12) == "position fen")
-        {
-            std::string fen = line.substr(13);
-            currentBoard = Board(fen);
-        }
-        // Handle "go perft X" or just "perft X"
-        else if (line.find("perft") != std::string::npos)
-        {
-            size_t pos = line.find_last_of(' ');
-            int depth = std::stoi(line.substr(pos + 1));
-            MoveGen::perft(currentBoard, depth, true);
-        }
-        else if (line == "quit")
-        {
-            break;
+            Move m = testBoard.parseMove(mStr);
+            testBoard.makeMove(m);
         }
     }
-    return 0;
+
+    // 6. Execute Perft
+    // testBoard.printChessBoard();
+    // std::cout << depth << std::endl;
+
+    uint64_t totalNodes = MoveGen::perft(testBoard, depth, true);
+
+    // Final output for perftree
+    std::cout << "\n"
+              << totalNodes << std::endl;
 }

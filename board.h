@@ -8,39 +8,33 @@
 #include "movelist.h"
 #include "types.h"
 
-struct BoardState
-{
-    Bitboard bitboards[2][8];
-    Bitboard allCombined;
-    uint8_t pieceArray[64];
-    bool whiteShortCastle;
-    bool whiteLongCastle;
-    bool blackShortCastle;
-    bool blackLongCastle;
-    uint8_t passantSquare;
-    uint8_t halfmoveClock;
-};
 class Board
 {
 
 public:
+    Bitboard bitboardsInitial[2][8];
+    Bitboard allCombinedInitial;
+    uint8_t pieceArrayInitial[64];
+    bool whiteShortCastleInitial;
+    bool whiteLongCastleInitial;
+    bool blackShortCastleInitial;
+    bool blackLongCastleInitial;
+    uint8_t passantSquareInitial;
+    uint8_t halfmoveClockInitial;
+    bool isWhiteTurnInitial;
+    uint16_t fullmoveCounterInitial;
+
     Bitboard bitboards[2][8]; // 0 is combined, 1-6 holds piece type, 7 is pinned. White is 0, 1 is black
-
     Bitboard allCombined;
-
     uint8_t pieceArray[64];
-
     bool whiteShortCastle;
     bool whiteLongCastle;
     bool blackShortCastle;
     bool blackLongCastle;
-
     uint8_t passantSquare;
     uint8_t halfmoveClock;
-
-    bool evenNumMove;
+    bool isWhiteTurn;
     uint16_t fullmoveCounter;
-
     std::vector<Move> moveHistory;
 
     static constexpr Bitboard bitPositions[64] = {
@@ -67,10 +61,9 @@ public:
     void normalMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
     void rookKingMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
     void pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboard toBit, Move currMove);
-    void unmakeMove(const BoardState &anchor);
-    BoardState saveState();
+    void unmakeMove();
     void printChessBoard();
-    void nextTurn();
+    Move parseMove(std::string moveStr);
 };
 
 #endif
