@@ -232,7 +232,7 @@ private:
     static void rookGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList &list);
     static void kingGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList &list);
     static bool isAttacked(Board &board, uint8_t targetSquare);
-    static bool tryMove(Board &board, Move testMove);
+    static bool tryMove(Board &board, Move testMove, uint8_t kingSquare = 0);
 };
 
 #endif

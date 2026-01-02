@@ -287,8 +287,7 @@ void MoveGen::kingGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 	for (int i = 0; i < 8 && kingMoves[startPos][i] != 255; i++)
 	{
 		uint8_t endPos = kingMoves[startPos][i];
-
-		if ((friendlyPieces & board.bitPositions[endPos]) == 0 && tryMove(board, Move(startPos, endPos)))
+		if ((friendlyPieces & board.bitPositions[endPos]) == 0 && tryMove(board, Move(startPos, endPos), endPos))
 		{
 			list.add(Move(startPos, endPos));
 		}
@@ -350,6 +349,10 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 			{
 				break;
 			}
+			else if ((opponentPieces[0] & endBitPos) != 0 && (opponentPieces[Piece::BISHOP] & endBitPos) == 0 && (opponentPieces[Piece::QUEEN] & endBitPos) == 0)
+			{
+				break;
+			}
 			else if ((opponentPieces[0] & endBitPos) != 0 && ((opponentPieces[Piece::BISHOP] & endBitPos) != 0 || (opponentPieces[Piece::QUEEN] & endBitPos) != 0))
 			{
 				return true;
@@ -375,7 +378,6 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 			}
 		}
 	}
-
 	for (int i = 0; i < 8 && knightMoves[targetSquare][i] != 255; i++)
 	{
 		uint8_t endPos = knightMoves[targetSquare][i];
@@ -387,9 +389,18 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 	return false;
 }
 
-bool MoveGen::tryMove(Board &board, Move testMove)
+bool MoveGen::tryMove(Board &board, Move testMove, uint8_t kingSquare)
 {
-	Bitboard friendlyKing = board.isWhiteTurn ? board.bitboards[0][Piece::KING] : board.bitboards[1][Piece::KING];
+
+	Bitboard friendlyKing;
+	if (kingSquare == 0)
+	{
+		friendlyKing = board.isWhiteTurn ? board.bitboards[0][Piece::KING] : board.bitboards[1][Piece::KING];
+	}
+	else
+	{
+		friendlyKing = 1ULL << kingSquare;
+	}
 
 	board.makeMove(testMove);
 	bool legal = !isAttacked(board, std::countr_zero(friendlyKing));

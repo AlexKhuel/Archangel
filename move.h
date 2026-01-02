@@ -31,7 +31,7 @@ public:
 
     Move(int from, int to, int flag = 0, int promotion = 0)
     {
-        data = from | (to << 6) | (flag << 12) | (promotion << 14);
+        data = from | (to << 6) | flag | promotion;
     }
 
     int getFrom() const { return data & FROM_MASK; }

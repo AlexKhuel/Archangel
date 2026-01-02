@@ -54,8 +54,8 @@ void Board::normalMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitbo
 	friendlyPieces[fromType] ^= fromBit;
 	friendlyPieces[0] ^= fromBit;
 
-	friendlyPieces[fromType] |= toBit;
-	friendlyPieces[0] |= toBit;
+	friendlyPieces[fromType] ^= toBit;
+	friendlyPieces[0] ^= toBit;
 
 	// Updates opponents piece and combined Bitboards if there is a capture
 	if (toType != 0)
@@ -208,7 +208,7 @@ void Board::pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboar
 	Bitboard *opponentPieces = isWhiteTurn ? bitboards[1] : bitboards[0];
 	if (currMove.isPassant())
 	{
-		int sideShift = (currMove.getTo() % 8) - (currMove.getFrom() % 8);
+		int oppositeSquare = (currMove.getFrom() & ~7) + (currMove.getTo() & 7);
 
 		// Updates friendly piece and combined Bitboards
 		friendlyPieces[fromType] ^= fromBit;
@@ -218,25 +218,24 @@ void Board::pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboar
 		friendlyPieces[0] |= toBit;
 
 		// Updates opponents piece and combined Bitboards if there is a capture
-		opponentPieces[Piece::PAWN] ^= bitPositions[currMove.getFrom() + sideShift];
-		opponentPieces[0] ^= bitPositions[currMove.getFrom() + sideShift];
+		opponentPieces[Piece::PAWN] ^= bitPositions[oppositeSquare];
+		opponentPieces[0] ^= bitPositions[oppositeSquare];
+		allCombined ^= bitPositions[oppositeSquare];
 
 		// Updates combined board
 		allCombined ^= fromBit;
-		allCombined |= toBit;
-		allCombined ^= bitPositions[currMove.getFrom() + sideShift];
+		allCombined ^= toBit;
 
 		// Updates the piece array
 		pieceArray[currMove.getTo()] = pieceArray[currMove.getFrom()] & 15;
 		pieceArray[currMove.getFrom()] = 0;
-		pieceArray[currMove.getFrom() + sideShift] = 0;
+		pieceArray[oppositeSquare] = 0;
 	}
 	else
 	{
-		normalMove(fromType, toType, fromBit, toBit, currMove);
 
 		if ((pieceArray[currMove.getFrom()] & Piece::COLOR_MASK) == Piece::WHITE &&
-			(currMove.getTo() / 8) - (currMove.getFrom() / 8) == 2)
+			((currMove.getTo() / 8) - (currMove.getFrom() / 8)) == 2)
 		{
 			passantSquare = currMove.getTo() - 8;
 		}
@@ -245,6 +244,8 @@ void Board::pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboar
 		{
 			passantSquare = currMove.getTo() + 8;
 		}
+
+		normalMove(fromType, toType, fromBit, toBit, currMove);
 	}
 }
 
@@ -278,44 +279,66 @@ void Board::unmakeMove()
 
 void Board::printChessBoard()
 {
-	// Unicode chess piece symbols
-	const char *whitePieces[] = {" ", "♙", "♘", "♗", "♖", "♕", "♔"};
-	const char *blackPieces[] = {" ", "♟", "♞", "♝", "♜", "♛", "♚"};
-
-	std::cout << "  a b c d e f g h\n";
+	std::cout << "  +-----------------+" << std::endl;
 
 	for (int rank = 7; rank >= 0; rank--)
-	{
-		std::cout << (rank + 1) << " ";
+	{ // Start from rank 8 down to 1
+		std::cout << rank + 1 << " | ";
 
 		for (int file = 0; file < 8; file++)
 		{
 			int index = rank * 8 + file;
 			uint8_t piece = pieceArray[index];
 
-			uint8_t type = piece & 0x7;	 // Extract piece type (bits 0-2)
-			uint8_t color = piece & 0x8; // Extract color (bit 3)
-
-			const char *symbol = " ";
-			if (type > 0 && type <= 6)
+			if (piece == 0)
 			{
+				std::cout << ". "; // Empty square
+			}
+			else
+			{
+				uint8_t type = piece & Piece::TYPE_MASK;
+				uint8_t color = piece & Piece::COLOR_MASK;
+
+				char pieceChar;
+				switch (type)
+				{
+				case Piece::PAWN:
+					pieceChar = 'p';
+					break;
+				case Piece::KNIGHT:
+					pieceChar = 'n';
+					break;
+				case Piece::BISHOP:
+					pieceChar = 'b';
+					break;
+				case Piece::ROOK:
+					pieceChar = 'r';
+					break;
+				case Piece::QUEEN:
+					pieceChar = 'q';
+					break;
+				case Piece::KING:
+					pieceChar = 'k';
+					break;
+				default:
+					pieceChar = '?';
+					break;
+				}
+
+				// Use Uppercase for White, Lowercase for Black
 				if (color == Piece::WHITE)
 				{
-					symbol = whitePieces[type];
+					pieceChar = toupper(pieceChar);
 				}
-				else
-				{
-					symbol = blackPieces[type];
-				}
+
+				std::cout << pieceChar << " ";
 			}
-
-			std::cout << symbol << " ";
 		}
-
-		std::cout << (rank + 1) << "\n";
+		std::cout << "|" << std::endl;
 	}
 
-	std::cout << "  a b c d e f g h\n";
+	std::cout << "  +-----------------+" << std::endl;
+	std::cout << "    a b c d e f g h" << std::endl;
 }
 
 Board::Board(std::string fenString)
@@ -526,16 +549,16 @@ Move Board::parseMove(std::string moveStr)
 	// 2. Handle Promotion (e.g., "a7a8q")
 	if (moveStr.length() == 5)
 	{
-		flag = Move::PROMOTION >> 12; // Use your bitshift logic
+		flag = Move::PASSANT; // Use your bitshift logic
 		char p = moveStr[4];
 		if (p == 'n')
-			promotionPiece = Move::KNIGHT >> 14;
+			promotionPiece = Move::KNIGHT;
 		else if (p == 'b')
-			promotionPiece = Move::BISHOP >> 14;
+			promotionPiece = Move::BISHOP;
 		else if (p == 'r')
-			promotionPiece = Move::ROOK >> 14;
+			promotionPiece = Move::ROOK;
 		else if (p == 'q')
-			promotionPiece = Move::QUEEN >> 14;
+			promotionPiece = Move::QUEEN;
 	}
 
 	// 3. Special Case Handling (En Passant / Castling)
@@ -551,14 +574,14 @@ Move Board::parseMove(std::string moveStr)
 	// Castling check: Is it a king moving 2 squares horizontally?
 	if (pieceType == Piece::KING && std::abs(fromFile - toFile) == 2)
 	{
-		flag = Move::CASTLING >> 12;
+		flag = Move::CASTLING;
 	}
 
 	// En Passant check: Is it a pawn moving diagonally to an empty square?
 	// (In chess, a diagonal pawn move to an empty square is always an En Passant capture)
 	if (pieceType == Piece::PAWN && (fromFile != toFile) && targetPiece == 0) // assuming 0 is empty
 	{
-		flag = Move::PASSANT >> 12;
+		flag = Move::PASSANT;
 	}
 
 	return Move(fromSq, toSq, flag, promotionPiece);
