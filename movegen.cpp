@@ -7,6 +7,7 @@
 
 uint64_t MoveGen::perft(Board &board, int depth, bool isRoot)
 {
+
 	// Base case: if we reached the target depth, this leaf counts as 1 position
 	if (depth == 0)
 	{
@@ -34,9 +35,8 @@ uint64_t MoveGen::perft(Board &board, int depth, bool isRoot)
 			char toFile = 'a' + (move.getTo() % 8);
 			char toRank = '1' + (move.getTo() / 8);
 
-			// This should now print the large branchNodes value
 			std::cout << fromFile << fromRank << toFile << toRank
-					  << " " << branchNodes << std::endl;
+				  << " " << branchNodes << std::endl;
 		}
 	}
 	return totalNodes;
@@ -223,7 +223,7 @@ void MoveGen::bishopGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveLis
 	Bitboard opponentPieces = board.isWhiteTurn ? board.bitboards[1][0] : board.bitboards[0][0];
 	for (uint8_t i = 4; i < 8; i++)
 	{
-		for (int magnitude = 1; magnitude < disToEdge[startPos][i] + 1; magnitude++)
+		for (int magnitude = 1; magnitude < disToEdge(startPos, directions[i]) + 1; magnitude++)
 		{
 			int targetPos = startPos + directions[i] * magnitude;
 
@@ -254,11 +254,12 @@ void MoveGen::rookGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 	Bitboard opponentPieces = board.isWhiteTurn ? board.bitboards[1][0] : board.bitboards[0][0];
 	for (uint8_t i = 0; i < 4; i++)
 	{
-		for (int magnitude = 1; magnitude < disToEdge[startPos][i] + 1; magnitude++)
+		for (int magnitude = 1; magnitude < disToEdge(startPos, directions[i]) + 1; magnitude++)
 		{
 			int targetPos = startPos + directions[i] * magnitude;
 
 			int shift = directions[i] * magnitude;
+
 			Bitboard endBitPos = i % 2 == 0 ? bitPos >> std::abs(shift) : bitPos << std::abs(shift);
 
 			if ((friendlyPieces & endBitPos) != 0)
@@ -297,17 +298,17 @@ void MoveGen::kingGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 	if ((board.pieceArray[startPos] & Piece::COLOR_MASK) == Piece::WHITE)
 	{
 		if (board.whiteShortCastle &&
-			(board.allCombined & whiteShortEmpty) == 0 &&
-			!isAttacked(board, 4) && !isAttacked(board, 5) && !isAttacked(board, 6) &&
-			tryMove(board, Move(4, 6, Move::CASTLING)))
+		    (board.allCombined & whiteShortEmpty) == 0 &&
+		    !isAttacked(board, 4) && !isAttacked(board, 5) && !isAttacked(board, 6) &&
+		    tryMove(board, Move(4, 6, Move::CASTLING)))
 		{
 			list.add(Move(4, 6, Move::CASTLING));
 		}
 
 		if (board.whiteLongCastle &&
-			(board.allCombined & whiteLongEmpty) == 0 &&
-			!isAttacked(board, 4) && !isAttacked(board, 2) && !isAttacked(board, 3) &&
-			tryMove(board, Move(4, 2, Move::CASTLING)))
+		    (board.allCombined & whiteLongEmpty) == 0 &&
+		    !isAttacked(board, 4) && !isAttacked(board, 2) && !isAttacked(board, 3) &&
+		    tryMove(board, Move(4, 2, Move::CASTLING)))
 		{
 			list.add(Move(4, 2, Move::CASTLING));
 		}
@@ -315,17 +316,17 @@ void MoveGen::kingGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 	else
 	{
 		if (board.blackShortCastle &&
-			(board.allCombined & blackShortEmpty) == 0 &&
-			!isAttacked(board, 60) && !isAttacked(board, 61) && !isAttacked(board, 62) &&
-			tryMove(board, Move(60, 62, Move::CASTLING)))
+		    (board.allCombined & blackShortEmpty) == 0 &&
+		    !isAttacked(board, 60) && !isAttacked(board, 61) && !isAttacked(board, 62) &&
+		    tryMove(board, Move(60, 62, Move::CASTLING)))
 		{
 			list.add(Move(60, 62, Move::CASTLING));
 		}
 
 		if (board.blackLongCastle &&
-			(board.allCombined & blackLongEmpty) == 0 &&
-			!isAttacked(board, 60) && !isAttacked(board, 59) && !isAttacked(board, 58) &&
-			tryMove(board, Move(60, 58, Move::CASTLING)))
+		    (board.allCombined & blackLongEmpty) == 0 &&
+		    !isAttacked(board, 60) && !isAttacked(board, 59) && !isAttacked(board, 58) &&
+		    tryMove(board, Move(60, 58, Move::CASTLING)))
 		{
 			list.add(Move(60, 58, Move::CASTLING));
 		}
@@ -337,47 +338,46 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 	Bitboard *friendlyPieces = !board.isWhiteTurn ? board.bitboards[0] : board.bitboards[1];
 	Bitboard *opponentPieces = !board.isWhiteTurn ? board.bitboards[1] : board.bitboards[0];
 
+	// Bishops
 	for (uint8_t i = 4; i < 8; i++)
 	{
-		for (int magnitude = 1; magnitude < disToEdge[targetSquare][i] + 1; magnitude++)
+		for (int magnitude = 1; magnitude < disToEdge(targetSquare, directions[i]) + 1; magnitude++)
 		{
+			uint8_t shift = std::abs(directions[i] * magnitude);
+			Bitboard endBitPos = i % 2 == 0 ? board.bitPositions[targetSquare] >> shift : board.bitPositions[targetSquare] << shift;
 
-			int shift = directions[i] * magnitude;
-			Bitboard endBitPos = i % 2 == 0 ? board.bitPositions[targetSquare] >> std::abs(shift) : board.bitPositions[targetSquare] << std::abs(shift);
-
-			if ((friendlyPieces[0] & endBitPos) != 0)
-			{
-				break;
-			}
-			else if ((opponentPieces[0] & endBitPos) != 0 && (opponentPieces[Piece::BISHOP] & endBitPos) == 0 && (opponentPieces[Piece::QUEEN] & endBitPos) == 0)
-			{
-				break;
-			}
-			else if ((opponentPieces[0] & endBitPos) != 0 && ((opponentPieces[Piece::BISHOP] & endBitPos) != 0 || (opponentPieces[Piece::QUEEN] & endBitPos) != 0))
+			if (((opponentPieces[Piece::BISHOP] & endBitPos) != 0 || (opponentPieces[Piece::QUEEN] & endBitPos) != 0))
 			{
 				return true;
+			}
+			if ((board.allCombined & endBitPos) != 0)
+			{
+				break;
 			}
 		}
 	}
 
+	// Rooks
 	for (uint8_t i = 0; i < 4; i++)
 	{
-		for (int magnitude = 1; magnitude < disToEdge[targetSquare][i] + 1; magnitude++)
+		for (int magnitude = 1; magnitude < disToEdge(targetSquare, directions[i]) + 1; magnitude++)
 		{
+			uint8_t shift = std::abs(directions[i] * magnitude);
 
-			int shift = directions[i] * magnitude;
-			Bitboard endBitPos = i % 2 == 0 ? board.bitPositions[targetSquare] >> std::abs(shift) : board.bitPositions[targetSquare] << std::abs(shift);
+			Bitboard endBitPos = i % 2 == 0 ? board.bitPositions[targetSquare] >> shift : board.bitPositions[targetSquare] << shift;
 
-			if ((friendlyPieces[0] & endBitPos) != 0)
-			{
-				break;
-			}
-			else if ((friendlyPieces[0] & endBitPos) != 0 && ((opponentPieces[Piece::ROOK] & endBitPos) != 0 || (opponentPieces[Piece::QUEEN] & endBitPos) != 0))
+			if (((opponentPieces[Piece::ROOK] & endBitPos) != 0 || (opponentPieces[Piece::QUEEN] & endBitPos) != 0))
 			{
 				return true;
 			}
+			if ((board.allCombined & endBitPos) != 0)
+			{
+				break;
+			}
 		}
 	}
+
+	// Knights
 	for (int i = 0; i < 8 && knightMoves[targetSquare][i] != 255; i++)
 	{
 		uint8_t endPos = knightMoves[targetSquare][i];
@@ -386,6 +386,28 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 			return true;
 		}
 	}
+
+	// Kings
+	for (int i = 0; i < 8 && kingMoves[targetSquare][i] != 255; i++)
+	{
+		uint8_t endPos = kingMoves[targetSquare][i];
+		if ((opponentPieces[Piece::KING] & board.bitPositions[endPos]) != 0)
+		{
+			return true;
+		}
+	}
+
+	// Pawns
+	Bitboard bitTargetSquare = board.bitPositions[targetSquare];
+	if (!board.isWhiteTurn && ((opponentPieces[Piece::PAWN] & (bitTargetSquare << 7)) != 0 || (opponentPieces[Piece::PAWN] & (bitTargetSquare << 9)) != 0))
+	{
+		return true;
+	}
+	else if (board.isWhiteTurn && ((opponentPieces[Piece::PAWN] & (bitTargetSquare >> 7)) != 0 || (opponentPieces[Piece::PAWN] & (bitTargetSquare >> 9)) != 0))
+	{
+		return true;
+	}
+
 	return false;
 }
 
@@ -401,9 +423,38 @@ bool MoveGen::tryMove(Board &board, Move testMove, uint8_t kingSquare)
 	{
 		friendlyKing = 1ULL << kingSquare;
 	}
-
 	board.makeMove(testMove);
 	bool legal = !isAttacked(board, std::countr_zero(friendlyKing));
+
 	board.unmakeMove();
 	return legal;
+}
+
+int MoveGen::disToEdge(uint8_t startPos, int direction)
+{
+	int file = startPos % 8;
+	int rank = startPos / 8;
+
+	// 1. Check Cardinal Directions
+	if (direction == -1)
+		return file; // West
+	if (direction == 1)
+		return 7 - file; // East
+	if (direction == -8)
+		return rank; // South
+	if (direction == 8)
+		return 7 - rank; // North
+
+	// 2. Check Diagonal Directions
+	if (direction == -9)
+		return std::min(rank, file); // South-West
+	if (direction == 9)
+		return std::min(7 - rank, 7 - file); // North-East
+	if (direction == -7)
+		return std::min(rank, 7 - file); // South-East
+	if (direction == 7)
+		return std::min(7 - rank, file); // North-West
+
+	// 3. Invalid Direction Catch
+	return -1;
 }
