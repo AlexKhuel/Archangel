@@ -64,6 +64,7 @@ public:
     void unmakeMove();
     void printChessBoard();
     Move parseMove(std::string moveStr);
+    static std::string moveToString(Move move);
 };
 
 #endif

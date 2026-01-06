@@ -30,42 +30,7 @@ uint64_t MoveGen::perft(Board &board, int depth, bool isRoot)
 
 		if (isRoot)
 		{
-			if (move.isPromotion())
-			{
-
-				char fromFile = 'a' + (move.getFrom() % 8);
-				char fromRank = '1' + (move.getFrom() / 8);
-				char toFile = 'a' + (move.getTo() % 8);
-				char toRank = '1' + (move.getTo() / 8);
-				char promotionType = '!';
-
-				switch (move.getPromotion())
-				{
-				case Move::QUEEN:
-					promotionType = 'q';
-					break;
-				case Move::ROOK:
-					promotionType = 'r';
-					break;
-				case Move::BISHOP:
-					promotionType = 'b';
-					break;
-				case Move::KNIGHT:
-					promotionType = 'n';
-					break;
-				}
-
-				std::cout << fromFile << fromRank << toFile << toRank << promotionType << " " << branchNodes << std::endl;
-			}
-			else
-			{
-				char fromFile = 'a' + (move.getFrom() % 8);
-				char fromRank = '1' + (move.getFrom() / 8);
-				char toFile = 'a' + (move.getTo() % 8);
-				char toRank = '1' + (move.getTo() / 8);
-				std::cout << fromFile << fromRank << toFile << toRank
-					  << " " << branchNodes << std::endl;
-			}
+			board.moveToString(move);
 		}
 	}
 	return totalNodes;

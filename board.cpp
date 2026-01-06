@@ -645,3 +645,42 @@ Move Board::parseMove(std::string moveStr)
 
 	return Move(fromSq, toSq, flag, promotionPiece);
 }
+
+std::string Board::moveToString(Move move)
+{
+	// 1. Calculate basic coordinates (always present)
+	char fromFile = 'a' + (move.getFrom() % 8);
+	char fromRank = '1' + (move.getFrom() / 8);
+	char toFile = 'a' + (move.getTo() % 8);
+	char toRank = '1' + (move.getTo() / 8);
+
+	// 2. Build the base string (e.g., "e7e8")
+	std::string moveStr = {fromFile, fromRank, toFile, toRank};
+
+	// 3. Handle promotions
+	if (move.isPromotion())
+	{
+		char promotionType = 'q'; // Default to queen just in case
+
+		switch (move.getPromotion())
+		{
+		case Move::QUEEN:
+			promotionType = 'q';
+			break;
+		case Move::ROOK:
+			promotionType = 'r';
+			break;
+		case Move::BISHOP:
+			promotionType = 'b';
+			break;
+		case Move::KNIGHT:
+			promotionType = 'n';
+			break;
+		}
+
+		// Append the piece character (e.g., "e7e8q")
+		moveStr += promotionType;
+	}
+
+	return moveStr;
+}

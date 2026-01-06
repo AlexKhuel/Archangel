@@ -1,88 +1,105 @@
 #include "board.h"
 #include "movegen.h"
+#include "search.h"
 #include <sstream>
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include "board.h"
-#include "movegen.h"
-#include <iostream>
-/*
-int main()
+const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+// Helper to split string by spaces
+std::vector<std::string> split(const std::string &str)
 {
-    Board testBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
-    auto start = std::chrono::steady_clock::now();
-
-    for (int depth = 1; depth < 11; depth++)
-
-    {
-        uint64_t moveCount = MoveGen::perft(testBoard, depth, true);
-
-        auto now = std::chrono::steady_clock::now();
-
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
-
-        std::cout << "Depth: " << depth << " ply   Result: " << moveCount << " Positions    Time: " << elapsed.count() << " milliseconds" << std::endl;
-    }
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream ss(str);
+    while (ss >> token)
+        tokens.push_back(token);
+    return tokens;
 }
 
-*/
-
-int main(int argc, char *argv[])
+int main()
 {
-    // 1. Defaults
-    std::string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    int depth = 1;
-    std::string moveList = "";
+    std::setbuf(stdout, NULL); // Critical for GUI communication
 
-    if (argc > 1)
+    Board board(START_FEN);
+    std::string line;
+
+    while (std::getline(std::cin, line))
     {
+        std::vector<std::string> tokens = split(line);
+        if (tokens.empty())
+            continue;
 
-        depth = std::stoi(argv[1]);
-    }
+        std::string command = tokens[0];
 
-    if (argc > 2)
-    {
-        fen = argv[2];
-    }
-
-    if (argc > 3)
-    {
-        moveList = argv[3];
-    }
-
-    Board testBoard(fen);
-
-    if (!moveList.empty())
-    {
-        std::stringstream ss(moveList);
-        std::string mStr;
-        while (ss >> mStr)
+        if (command == "uci")
         {
-            Move m = testBoard.parseMove(mStr);
-            testBoard.makeMove(m);
+            std::cout << "id name Archangel" << std::endl;
+            std::cout << "id author Joshua Dowd" << std::endl;
+            std::cout << "uciok" << std::endl;
+        }
+        else if (command == "isready")
+        {
+            std::cout << "readyok" << std::endl;
+        }
+        else if (command == "ucinewgame")
+        {
+            board = Board(START_FEN);
+        }
+        else if (command == "position")
+        {
+            // position [startpos | fen] moves ....
+            size_t moveIndex = 0;
+
+            if (tokens[1] == "startpos")
+            {
+                board = Board(START_FEN);
+                moveIndex = 2; // "moves" would be at tokens[2]
+            }
+            else if (tokens[1] == "fen")
+            {
+                // FENs are 6 tokens long. Reconstruct it.
+                std::string fen = tokens[2] + " " + tokens[3] + " " + tokens[4] + " " +
+                                  tokens[5] + " " + tokens[6] + " " + tokens[7];
+                board = Board(fen);
+                moveIndex = 8; // "moves" would be at tokens[8]
+            }
+
+            // Apply moves if they exist in the command
+            for (size_t i = moveIndex; i < tokens.size(); ++i)
+            {
+                if (tokens[i] == "moves")
+                    continue;
+                Move m = board.parseMove(tokens[i]);
+                board.makeMove(m);
+            }
+        }
+        else if (command == "go")
+        {
+            // 1. Determine search depth or time (parsing logic)
+            int depth = 4;
+            for (size_t i = 1; i < tokens.size(); i++)
+            {
+                if (tokens[i] == "depth")
+                    depth = std::stoi(tokens[i + 1]);
+            }
+
+            // 2. Call your actual search function (not perft)
+            // Your search should return a 'Move' object
+            Move bestMoveFound = Search::findBestMove(board, depth);
+
+            // 3. Convert that Move object to a string (e.g., "e2e4")
+            std::string moveStr = board.moveToString(bestMoveFound);
+
+            // 4. Tell the GUI what to play
+            std::cout << "bestmove " << moveStr << std::endl;
+        }
+        else if (command == "quit")
+        {
+            break;
         }
     }
-
-    uint64_t totalNodes = MoveGen::perft(testBoard, depth, true);
-
-    std::cout << "\n"
-              << totalNodes << std::endl;
+    return 0;
 }
-
-/*
-int main()
-{
-    Board testBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
-    testBoard.printChessBoard();
-    testBoard.makeMove(testBoard.parseMove("h2h4"));
-    testBoard.makeMove(testBoard.parseMove("h7h6"));
-    testBoard.makeMove(testBoard.parseMove("h4h5"));
-    testBoard.makeMove(testBoard.parseMove("g7g5"));
-    testBoard.makeMove(Move(39, 46, Move::PASSANT));
-    testBoard.printChessBoard();
-}
-*/
