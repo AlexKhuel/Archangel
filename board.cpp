@@ -5,6 +5,7 @@
 
 void Board::makeMove(Move currMove)
 {
+
 	moveHistory.push_back(currMove);
 
 	Bitboard fromBit = bitPositions[currMove.getFrom()];
@@ -247,6 +248,46 @@ void Board::pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboar
 		pieceArray[currMove.getTo()] = pieceArray[currMove.getFrom()] & 15;
 		pieceArray[currMove.getFrom()] = 0;
 		pieceArray[oppositeSquare] = 0;
+	}
+	else if (currMove.isPromotion())
+	{
+		uint8_t newColor = isWhiteTurn ? Piece::WHITE : Piece::BLACK;
+
+		friendlyPieces[Piece::PAWN] ^= fromBit;
+		friendlyPieces[0] ^= fromBit;
+		friendlyPieces[0] ^= toBit;
+
+		pieceArray[currMove.getFrom()] = 0;
+
+		if (currMove.getPromotion() == Move::QUEEN)
+		{
+			friendlyPieces[Piece::QUEEN] ^= toBit;
+			pieceArray[currMove.getTo()] = Piece::QUEEN | newColor;
+		}
+		else if (currMove.getPromotion() == Move::ROOK)
+		{
+			friendlyPieces[Piece::ROOK] ^= toBit;
+			pieceArray[currMove.getTo()] = Piece::ROOK | newColor;
+		}
+		else if (currMove.getPromotion() == Move::BISHOP)
+		{
+			friendlyPieces[Piece::BISHOP] ^= toBit;
+			pieceArray[currMove.getTo()] = Piece::BISHOP | newColor;
+		}
+		else
+		{
+			friendlyPieces[Piece::KNIGHT] ^= toBit;
+			pieceArray[currMove.getTo()] = Piece::KNIGHT | newColor;
+		}
+
+		if (toType != 0)
+		{
+			opponentPieces[toType] ^= toBit;
+			opponentPieces[0] ^= toBit;
+			allCombined ^= toBit;
+		}
+
+		allCombined = bitboards[0][0] | bitboards[1][0];
 	}
 	else
 	{

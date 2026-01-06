@@ -30,13 +30,42 @@ uint64_t MoveGen::perft(Board &board, int depth, bool isRoot)
 
 		if (isRoot)
 		{
-			char fromFile = 'a' + (move.getFrom() % 8);
-			char fromRank = '1' + (move.getFrom() / 8);
-			char toFile = 'a' + (move.getTo() % 8);
-			char toRank = '1' + (move.getTo() / 8);
+			if (move.isPromotion())
+			{
 
-			std::cout << fromFile << fromRank << toFile << toRank
-				  << " " << branchNodes << std::endl;
+				char fromFile = 'a' + (move.getFrom() % 8);
+				char fromRank = '1' + (move.getFrom() / 8);
+				char toFile = 'a' + (move.getTo() % 8);
+				char toRank = '1' + (move.getTo() / 8);
+				char promotionType = '!';
+
+				switch (move.getPromotion())
+				{
+				case Move::QUEEN:
+					promotionType = board.isWhiteTurn == true ? 'Q' : 'q';
+					break;
+				case Move::ROOK:
+					promotionType = board.isWhiteTurn == true ? 'R' : 'r';
+					break;
+				case Move::BISHOP:
+					promotionType = board.isWhiteTurn == true ? 'B' : 'b';
+					break;
+				case Move::KNIGHT:
+					promotionType = board.isWhiteTurn == true ? 'N' : 'n';
+					break;
+				}
+
+				std::cout << fromFile << fromRank << toFile << toRank << promotionType << " " << branchNodes << std::endl;
+			}
+			else
+			{
+				char fromFile = 'a' + (move.getFrom() % 8);
+				char fromRank = '1' + (move.getFrom() / 8);
+				char toFile = 'a' + (move.getTo() % 8);
+				char toRank = '1' + (move.getTo() / 8);
+				std::cout << fromFile << fromRank << toFile << toRank
+					  << " " << branchNodes << std::endl;
+			}
 		}
 	}
 	return totalNodes;
@@ -169,6 +198,7 @@ void MoveGen::pawnGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 		}
 		if (startPos % 8 != 0 && ((bitPos >> 9) & opponentPieces) != 0 && tryMove(board, Move(startPos, startPos - 9)))
 		{
+
 			if (startPos / 8 == 1)
 			{
 				list.add(Move(startPos, startPos - 9, Move::PROMOTION, Move::KNIGHT));
