@@ -33,7 +33,7 @@ public:
         {1, 5, 17, 21, 26, 28, 255, 255},       // Square 11 (d2)
         {2, 6, 18, 22, 27, 29, 255, 255},       // Square 12 (e2)
         {3, 7, 19, 23, 28, 30, 255, 255},       // Square 13 (f2)
-        {4, 20, 24, 29, 31, 255, 255, 255},     // Square 14 (g2)
+        {4, 20, 29, 31, 255, 255, 255, 255},    // Square 14 (g2)
         {5, 21, 30, 255, 255, 255, 255, 255},   // Square 15 (h2)
         {1, 10, 26, 33, 255, 255, 255, 255},    // Square 16 (a3)
         {0, 2, 11, 27, 32, 34, 255, 255},       // Square 17 (b3)
@@ -165,7 +165,7 @@ private:
     static void kingGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList &list);
     static bool isAttacked(Board &board, uint8_t targetSquare);
     static bool kingIsAttacked(Board &board, uint8_t targetSquare);
-    static bool tryMove(Board &board, Move testMove, uint8_t kingSquare = 0);
+    static bool tryMove(Board &board, Move testMove, uint8_t kingSquare = 255);
     static int disToEdge(uint8_t startPos, int direction);
 };
 

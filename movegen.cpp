@@ -30,7 +30,7 @@ uint64_t MoveGen::perft(Board &board, int depth, bool isRoot)
 
 		if (isRoot)
 		{
-			board.moveToString(move);
+			std::cout << board.moveToString(move) << " " << branchNodes << std::endl;
 		}
 	}
 	return totalNodes;
@@ -414,8 +414,8 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 		return true;
 	}
 	else if (board.isWhiteTurn &&
-		 (((opponentPieces[Piece::PAWN] & (bitTargetSquare >> 7)) != 0 && (targetSquare % 8) != 0) ||
-		  ((opponentPieces[Piece::PAWN] & (bitTargetSquare >> 9)) != 0 && (targetSquare % 8) != 7)))
+		 (((opponentPieces[Piece::PAWN] & (bitTargetSquare >> 7)) != 0 && (targetSquare % 8) != 7) ||
+		  ((opponentPieces[Piece::PAWN] & (bitTargetSquare >> 9)) != 0 && (targetSquare % 8) != 0)))
 	{
 		return true;
 	}
@@ -507,7 +507,7 @@ bool MoveGen::tryMove(Board &board, Move testMove, uint8_t kingSquare)
 {
 
 	Bitboard friendlyKing;
-	if (kingSquare == 0)
+	if (kingSquare == 255)
 	{
 		friendlyKing = board.isWhiteTurn ? board.bitboards[0][Piece::KING] : board.bitboards[1][Piece::KING];
 	}

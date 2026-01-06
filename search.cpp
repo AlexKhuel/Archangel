@@ -6,7 +6,19 @@ Move Search::findBestMove(Board &board, uint8_t depth)
 
         MoveGen::generateMoves(board, list);
 
-        uint8_t index = rand() % list.count;
+        int bestDiff = -1000;
+        int bestIndex = -1;
 
-        return list.moveList[index];
+        for (int i = 0; i < list.count; i++)
+        {
+                int currDif = board.materialDifference(list.moveList[i]);
+
+                if (currDif > bestDiff)
+                {
+                        bestDiff = currDif;
+                        bestIndex = i;
+                }
+        }
+
+        return list.moveList[bestIndex];
 }

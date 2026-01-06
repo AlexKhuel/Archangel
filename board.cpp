@@ -208,7 +208,7 @@ void Board::rookKingMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bit
 				friendlyPieces[0] |= bitPositions[61];
 				allCombined |= bitPositions[61];
 
-				friendlyPieces[Piece::ROOK] = bitPositions[63];
+				friendlyPieces[Piece::ROOK] ^= bitPositions[63];
 				friendlyPieces[0] ^= bitPositions[63];
 				allCombined ^= bitPositions[63];
 			}
@@ -683,4 +683,40 @@ std::string Board::moveToString(Move move)
 	}
 
 	return moveStr;
+}
+
+int Board::materialDifference(Move move)
+{
+	uint8_t material = 0;
+
+	if (isWhiteTurn)
+	{
+		material += 1 * std::popcount(bitboards[0][Piece::PAWN]);
+		material += 3 * std::popcount(bitboards[0][Piece::BISHOP]);
+		material += 3 * std::popcount(bitboards[0][Piece::KNIGHT]);
+		material += 5 * std::popcount(bitboards[0][Piece::ROOK]);
+		material += 9 * std::popcount(bitboards[0][Piece::QUEEN]);
+
+		material -= 1 * std::popcount(bitboards[1][Piece::PAWN]);
+		material -= 3 * std::popcount(bitboards[1][Piece::BISHOP]);
+		material -= 3 * std::popcount(bitboards[1][Piece::KNIGHT]);
+		material -= 5 * std::popcount(bitboards[1][Piece::ROOK]);
+		material -= 9 * std::popcount(bitboards[1][Piece::QUEEN]);
+	}
+	else
+	{
+		material -= 1 * std::popcount(bitboards[0][Piece::PAWN]);
+		material -= 3 * std::popcount(bitboards[0][Piece::BISHOP]);
+		material -= 3 * std::popcount(bitboards[0][Piece::KNIGHT]);
+		material -= 5 * std::popcount(bitboards[0][Piece::ROOK]);
+		material -= 9 * std::popcount(bitboards[0][Piece::QUEEN]);
+
+		material += 1 * std::popcount(bitboards[1][Piece::PAWN]);
+		material += 3 * std::popcount(bitboards[1][Piece::BISHOP]);
+		material += 3 * std::popcount(bitboards[1][Piece::KNIGHT]);
+		material += 5 * std::popcount(bitboards[1][Piece::ROOK]);
+		material += 9 * std::popcount(bitboards[1][Piece::QUEEN]);
+	}
+
+	return material;
 }

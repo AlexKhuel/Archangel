@@ -19,7 +19,7 @@ std::vector<std::string> split(const std::string &str)
     return tokens;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     std::setbuf(stdout, NULL); // Critical for GUI communication
 
