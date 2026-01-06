@@ -42,16 +42,16 @@ uint64_t MoveGen::perft(Board &board, int depth, bool isRoot)
 				switch (move.getPromotion())
 				{
 				case Move::QUEEN:
-					promotionType = board.isWhiteTurn == true ? 'Q' : 'q';
+					promotionType = 'q';
 					break;
 				case Move::ROOK:
-					promotionType = board.isWhiteTurn == true ? 'R' : 'r';
+					promotionType = 'r';
 					break;
 				case Move::BISHOP:
-					promotionType = board.isWhiteTurn == true ? 'B' : 'b';
+					promotionType = 'b';
 					break;
 				case Move::KNIGHT:
-					promotionType = board.isWhiteTurn == true ? 'N' : 'n';
+					promotionType = 'n';
 					break;
 				}
 
@@ -271,9 +271,12 @@ void MoveGen::bishopGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveLis
 			{
 				break;
 			}
-			else if ((opponentPieces & endBitPos) != 0 && tryMove(board, Move(startPos, targetPos)))
+			else if ((opponentPieces & endBitPos) != 0)
 			{
-				list.add(Move(startPos, targetPos));
+				if (tryMove(board, Move(startPos, targetPos)))
+				{
+					list.add(Move(startPos, targetPos));
+				}
 				break;
 			}
 			else if ((board.allCombined & endBitPos) == 0 && tryMove(board, Move(startPos, targetPos)))
@@ -328,6 +331,7 @@ void MoveGen::kingGen(Board &board, uint8_t startPos, Bitboard bitPos, MoveList 
 	for (int i = 0; i < 8 && kingMoves[startPos][i] != 255; i++)
 	{
 		uint8_t endPos = kingMoves[startPos][i];
+
 		if ((friendlyPieces & board.bitPositions[endPos]) == 0 && tryMove(board, Move(startPos, endPos), endPos))
 		{
 			list.add(Move(startPos, endPos));
@@ -387,7 +391,6 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 
 			if (((opponentPieces[Piece::BISHOP] & endBitPos) != 0 || (opponentPieces[Piece::QUEEN] & endBitPos) != 0))
 			{
-
 				return true;
 			}
 			if ((board.allCombined & endBitPos) != 0)
@@ -439,12 +442,15 @@ bool MoveGen::isAttacked(Board &board, uint8_t targetSquare)
 
 	// Pawns
 	Bitboard bitTargetSquare = board.bitPositions[targetSquare];
-	if (!board.isWhiteTurn && ((opponentPieces[Piece::PAWN] & (bitTargetSquare << 7)) != 0 || (opponentPieces[Piece::PAWN] & (bitTargetSquare << 9)) != 0))
+	if (!board.isWhiteTurn &&
+	    (((opponentPieces[Piece::PAWN] & (bitTargetSquare << 7)) != 0 && (targetSquare % 8) != 0) ||
+	     ((opponentPieces[Piece::PAWN] & (bitTargetSquare << 9)) != 0 && (targetSquare % 8) != 7)))
 	{
-
 		return true;
 	}
-	else if (board.isWhiteTurn && ((opponentPieces[Piece::PAWN] & (bitTargetSquare >> 7)) != 0 || (opponentPieces[Piece::PAWN] & (bitTargetSquare >> 9)) != 0))
+	else if (board.isWhiteTurn &&
+		 (((opponentPieces[Piece::PAWN] & (bitTargetSquare >> 7)) != 0 && (targetSquare % 8) != 0) ||
+		  ((opponentPieces[Piece::PAWN] & (bitTargetSquare >> 9)) != 0 && (targetSquare % 8) != 7)))
 	{
 		return true;
 	}
@@ -544,6 +550,7 @@ bool MoveGen::tryMove(Board &board, Move testMove, uint8_t kingSquare)
 	{
 		friendlyKing = 1ULL << kingSquare;
 	}
+
 	board.makeMove(testMove);
 
 	bool legal = !isAttacked(board, std::countr_zero(friendlyKing));

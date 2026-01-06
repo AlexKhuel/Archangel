@@ -608,7 +608,7 @@ Move Board::parseMove(std::string moveStr)
 	// 2. Handle Promotion (e.g., "a7a8q")
 	if (moveStr.length() == 5)
 	{
-		flag = Move::PASSANT; // Use your bitshift logic
+		flag = Move::PROMOTION; // Use your bitshift logic
 		char p = moveStr[4];
 		if (p == 'n')
 			promotionPiece = Move::KNIGHT;
