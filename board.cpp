@@ -38,6 +38,23 @@ void Board::makeMove(Move currMove)
 		pawnMove(fromType, toType, fromBit, toBit, currMove);
 	}
 
+	if (whiteShortCastle && toBit == (1ULL << 7))
+	{
+		whiteShortCastle = false;
+	}
+	if (whiteLongCastle && toBit == 0)
+	{
+		whiteLongCastle = false;
+	}
+	if (blackShortCastle && toBit == (1ULL << 63))
+	{
+		blackShortCastle = false;
+	}
+	if (blackLongCastle && toBit == (1ULL << 56))
+	{
+		blackLongCastle = false;
+	}
+
 	isWhiteTurn = !isWhiteTurn;
 
 	if (isWhiteTurn)
@@ -178,8 +195,8 @@ void Board::rookKingMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bit
 			}
 			else
 			{
-				pieceArray[62] = Piece::KING | Piece::WHITE;
-				pieceArray[62] = Piece::ROOK | Piece::WHITE;
+				pieceArray[61] = Piece::ROOK | Piece::BLACK;
+				pieceArray[62] = Piece::KING | Piece::BLACK;
 				pieceArray[63] = 0;
 
 				friendlyPieces[Piece::KING] = bitPositions[62];
@@ -190,7 +207,7 @@ void Board::rookKingMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bit
 				friendlyPieces[0] |= bitPositions[61];
 				allCombined |= bitPositions[61];
 
-				friendlyPieces[Piece::ROOK] ^= bitPositions[63];
+				friendlyPieces[Piece::ROOK] = bitPositions[63];
 				friendlyPieces[0] ^= bitPositions[63];
 				allCombined ^= bitPositions[63];
 			}
@@ -235,12 +252,12 @@ void Board::pawnMove(uint8_t fromType, uint8_t toType, Bitboard fromBit, Bitboar
 	{
 
 		if ((pieceArray[currMove.getFrom()] & Piece::COLOR_MASK) == Piece::WHITE &&
-			((currMove.getTo() / 8) - (currMove.getFrom() / 8)) == 2)
+		    ((currMove.getTo() / 8) - (currMove.getFrom() / 8)) == 2)
 		{
 			passantSquare = currMove.getTo() - 8;
 		}
 		else if ((pieceArray[currMove.getFrom()] & Piece::COLOR_MASK) == Piece::BLACK &&
-				 (currMove.getTo() / 8) - (currMove.getFrom() / 8) == -2)
+			 (currMove.getTo() / 8) - (currMove.getFrom() / 8) == -2)
 		{
 			passantSquare = currMove.getTo() + 8;
 		}
@@ -372,6 +389,7 @@ Board::Board(std::string fenString)
 
 	while (i < fenString.length() && fenString[i] != ' ')
 	{
+
 		char currChar = fenString[i];
 
 		if (currChar == '/')

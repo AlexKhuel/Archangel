@@ -28,8 +28,7 @@ public:
     {
         data = 0;
     }
-
-    Move(int from, int to, int flag = 0, int promotion = 0)
+    Move(int from, int to, uint16_t flag = 0, uint16_t promotion = 0)
     {
         data = from | (to << 6) | flag | promotion;
     }
